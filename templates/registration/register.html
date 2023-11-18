@@ -1,0 +1,46 @@
+{% extends 'registration/base_registration.html' %}
+
+{% load widget_tweaks %}
+
+{% block r_title %}
+    Register
+{% endblock %}
+
+{% block r_content %}
+    <div class="login-form">
+        <form action="" method="post" novalidate>
+            {% csrf_token %}
+            <h2>Register</h2>
+            <div class="form-input-material">
+                {% render_field form.username|append_attr:"required:required" type="text" id="username" placeholder=" " autocomplete="off" class="form-control-material" %}
+                <label for="username">Username</label>
+            </div>
+            {% for error in form.username.errors %}
+                <p class="error">{{ error }}</p>
+            {% endfor %}
+            <div class="form-input-material">
+                {% render_field form.email|append_attr:"required:required" type="email" id="email" placeholder=" " autocomplete="off" class="form-control-material" %}
+                <label for="email">Email</label>
+            </div>
+            {% for error in form.email.errors %}
+                <p class="error">{{ error }}</p>
+            {% endfor %}
+            <div class="form-input-material">
+                {% render_field form.password1|append_attr:"required:required" type="password" id="password" placeholder=" " autocomplete="off" class="form-control-material" %}
+                <label for="password">Password</label>
+            </div>
+            {% for error in form.password1.errors %}
+                <p class="error">{{ error }}</p>
+            {% endfor %}
+            <div class="form-input-material">
+                {% render_field form.password2|append_attr:"required:required" type="password" id="password_confirm" placeholder=" " autocomplete="off" class="form-control-material" %}
+                <label for="password_confirm">Password Confirm</label>
+            </div>
+            {% for error in form.password2.errors %}
+                <p class="error">{{ error }}</p>
+            {% endfor %}
+            <button type="submit" class="btn btn-ghost"><h6>Send Validation Code</h6></button>
+        </form>
+        <p class="login-register">Signed Up before? <a href="{% url 'accounts:login' %}" class="login-register-link">Login</a></p>
+    </div>
+{% endblock %}

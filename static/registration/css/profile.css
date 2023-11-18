@@ -1,0 +1,78 @@
+@import url("https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap");
+body {
+	background: #f9f9f9;
+	font-family: "Roboto", sans-serif;
+}
+
+.shadow {
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+.profile-tab-nav {
+	min-width: 250px;
+}
+
+.tab-content {
+	flex: 1;
+}
+
+.form-group {
+	margin-bottom: 1.5rem;
+}
+
+.nav-pills a.nav-link {
+	padding: 15px 20px;
+	border-bottom: 1px solid #ddd;
+	border-right: 4px solid #ddd;
+	border-radius: 0;
+	color: #333;
+}
+
+.nav-pills a.nav-link:hover {
+	background-color: #f0f0f1;
+}
+
+.nav-pills a.nav-link i {
+	width: 20px;
+}
+
+.nav-pills .nav-link.active, .nav-pills .show>.nav-link {
+	border-radius: 0 3px 5px 0;
+    border-right: 4px solid #00b8de;
+    border-bottom: 1px solid #00b8de;
+    color: #333;
+    background-color: unset;
+}
+
+.img-circle img {
+	height: 100px;
+	width: 100px;
+	border-radius: 100%;
+	border: 5px solid #fff;
+}
+
+.order-tab, .comment-tab {
+	max-height: 346px;
+	overflow-y: auto;
+
+}
+
+.order-area, .comment-area {
+	max-width: 95%;
+}
+
+.order-area div {
+	font-size: 13px !important;
+}
+
+.error {
+    color: #EE6983;
+    margin-top: 10px;
+	font-size: 14px !important;
+}
+
+.accordion-body {
+    max-height: unset !important;
+    overflow: unset !important;
+}
+

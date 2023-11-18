@@ -1,0 +1,34 @@
+{% extends 'registration/base_registration.html' %}
+
+{% load widget_tweaks %}
+
+{% block r_title %}
+    Login
+{% endblock %}
+
+{% block r_content %}
+    <div class="login-form">
+        <form action="" method="post">
+            {% csrf_token %}
+            <h2>Login</h2>
+            <div class="form-input-material">
+                {% render_field form.username|append_attr:"required:required" type="text" id="username" placeholder=" " autocomplete="off" class="no-arrow form-control-material" %}
+                <label for="username">Username or Email</label>
+            </div>
+            {% for error in form.username.errors %}
+                <p class="error">{{ error }}</p>
+            {% endfor %}
+            <div class="form-input-material">
+                {% render_field form.password|append_attr:"required:required" type="password" id="password" placeholder=" " autocomplete="off" class="form-control-material" %}
+                <label for="password">Password</label>
+            </div>
+            {% for error in form.password.errors %}
+                <p class="error">{{ error }}</p>
+            {% endfor %}
+            <a href="{% url 'accounts:password-reset' %}" class="password-reset">Password Reset</a>
+            <button type="submit" class="btn btn-ghost"><h6>Login</h6></button>
+        </form>
+        <a href="{% url 'accounts:otp-code-login' %}" class="otp-code-link">Login with Otp Code</a>
+        <p class="login-register">New in websit? <a href="{% url 'accounts:register' %}" class="login-register-link">Register</a></p>
+    </div>
+{% endblock %}

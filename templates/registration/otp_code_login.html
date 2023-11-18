@@ -1,0 +1,25 @@
+{% extends 'registration/base_registration.html' %}
+
+{% load widget_tweaks %}
+
+{% block r_title %}
+    Login
+{% endblock %}
+
+{% block r_content %}
+    <div class="login-form">
+        <form action="" method="post" novalidate>
+            {% csrf_token %}
+            <h2>Login</h2>
+            <div class="form-input-material">
+                {% render_field form.email|append_attr:"required:required" type="email" id="email" placeholder=" " autocomplete="off" class="no-arrow form-control-material" %}
+                <label for="email">Email</label>
+            </div>
+            {% for error in form.phone_number.errors %}
+                <p class="error">{{ error }}</p>
+            {% endfor %}
+            <button type="submit" class="btn btn-ghost"><h6>Send Validation Code</h6></button>
+        </form>
+        <a href="{% url 'accounts:login' %}" class="otp-code-link">Login with Password</a>
+    </div>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% load gravatar %}
+
+{% block title %}
+    Profile
+{% endblock %}
+
+{% block css_link %}
+    <link rel="stylesheet" type="text/css" href="{% static 'registration/css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+    <section class="py-5 bg-light mt-80">
+        <div class="container py-5">
+            <div class="bg-white shadow rounded d-block d-md-flex">
+                <div class=" profile-tab-nav border-right p-0">
+                    <div class="p-4">
+                        <div class="img-circle text-center mb-3">
+                            <img src="{% gravatar_url user.email %}" alt="{{ user.username }}"
+                                 class="shadow">
+                        </div>
+                        <h4 class="text-center">{{ user.username }}</h4>
+                    </div>
+                    <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                        <a class="d-flex nav-link active" id="account-tab" data-toggle="pill" href="#account" role="tab"
+                           aria-controls="account" aria-selected="true">
+                            <i class="fa fa-user-circle text-center mr-1"></i>
+                            <h6 class="me-2 mb-0">Profile</h6>
+                        </a>
+                        <a class="d-flex nav-link" id="order-tab" data-toggle="pill" href="#order" role="tab"
+                           aria-controls="order" aria-selected="false">
+                            <i class="fa fa-shopping-basket text-center mr-1"></i>
+                            <h6 class="me-2 mb-0">Orders</h6>
+                        </a>
+                        <a class="d-flex nav-link" id="comment-tab" data-toggle="pill" href="#comment" role="tab"
+                           aria-controls="comment" aria-selected="false">
+                            <i class="fa fa-comment text-center mr-1"></i>
+                            <h6 class="me-2 mb-0">Comments</h6>
+                        </a>
+                        <a class="d-flex nav-link"
+                           href="{% url 'accounts:password-change' %}">
+                            <i class="fa fa-key text-center mr-1"></i>
+                            <h6 class="me-2 mb-0">Password Change</h6>
+                        </a>
+                        <a class="d-flex nav-link" href="{% url 'accounts:logout' %}">
+                            <i class="fas fa-sign-out-alt text-center mr-1"></i>
+                            <h6 class="me-2 mb-0">Logout</h6>
+                        </a>
+                    </div>
+                </div>
+                <div class="tab-content p-4 p-md-5" id="v-pills-tabContent">
+                    <div class="tab-pane fade show active" id="account" role="tabpanel" aria-labelledby="account-tab">
+                        <form action="{% url 'accounts:profile' %}" method="post">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label><h6 class="text-grey me-2">Username</h6></label>
+                                        <input type="text" name="username" class="form-control"
+                                               value="{{ user.username }}"
+                                               {% if not user.is_staff %}disabled{% endif %}>
+                                        {% for error in form.username.errors %}
+                                            <p class="error">{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label><h6 class="text-grey me-2">Email</h6></label>
+                                        <input type="text" name="email" class="form-control"
+                                               value="{{ user.email}}">
+                                        {% for error in form.email.errors %}
+                                            <p class="error">{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label><h6 class="text-grey me-2">First Name</h6></label>
+                                        <input type="text" name="first_name" class="form-control"
+                                               value="{{ user.first_name }}">
+                                        {% for error in form.first_name.errors %}
+                                            <p class="error">{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label><h6 class="text-grey me-2">Last Name</h6></label>
+                                        <input type="text" name="last_name" class="form-control"
+                                               value="{{ user.last_name }}">
+                                        {% for error in form.last_name.errors %}
+                                            <p class="error">{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <button class="cart-btn" type="submit">Update</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+{% endblock %}
+

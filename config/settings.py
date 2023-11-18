@@ -40,9 +40,11 @@ INSTALLED_APPS = [
 
     # third party
     'channels',
+    'widget_tweaks',
 
     # my apps
     'chat',
+    'core',
 ]
 
 MIDDLEWARE = [
@@ -85,6 +87,10 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+
+# auth
+AUTH_USER_MODEL = 'core.User'
 
 
 # Database

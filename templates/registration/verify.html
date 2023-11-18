@@ -1,0 +1,82 @@
+{% extends 'registration/base_registration.html' %}
+
+{% load widget_tweaks %}
+{% load static %}
+
+{% block r_title %}
+    Verify
+{% endblock %}
+
+{% block r_content %}
+    <div class="login-form">
+        <form action="{% url 'accounts:verify' %}" method="post" id="verify-form"
+              data-url_root="{% url 'accounts:verify-check' %}">
+            {% csrf_token %}
+            <h2>Verify</h2>
+            <div class="form-input-material">
+                {% render_field form.code|append_attr:"required:required" oninput="javascript: if (this.value.length > 4) this.value = this.value.slice(0, 4);" type="number" id="verify-input" placeholder=" " autocomplete="off" class="no-arrow form-control-material" %}
+                <label for="verify-input">Code</label>
+            </div>
+            <div id="code-box" class="text-end d-none">
+
+            </div>
+            <button type="submit" class="btn btn-ghost d-none" id="verify-button"><h6>Submit</h6></button>
+        </form>
+        <div id="resend-code" class="text-center mt-3">
+
+        </div>
+    </div>
+    <script src="{% static 'base/js/jquery-1.11.0.min.js' %}"></script>
+    <script>
+        const resendForm = `<form action="{% url 'accounts:resend-code' %}" method="POST">
+                                {% csrf_token %}
+                                <input class="login-register-link bg-transparent border-0" type="submit"
+                                name="access" value='Resend Code'>
+                            </form>`
+    </script>
+    <script src="{% static 'registration/js/verify.js' %}"></script>
+
+    <script>
+        const verifyForm = document.getElementById('verify-form')
+        const VerifyInput = document.getElementById('verify-input')
+        const VerifyButton = document.getElementById('verify-button')
+        const codeBox = document.getElementById('code-box')
+        const csrf = document.getElementsByName('csrfmiddlewaretoken')[0].value
+
+        const sendCode = (code) => {
+            $.ajax({
+                type: 'POST',
+                url: verifyForm.getAttribute('data-url_root'),
+                data: {
+                    'csrfmiddlewaretoken': csrf,
+                    'code': code,
+                },
+                success: (res) => {
+                    const data = res.data
+                    if (data === 'TrueAccess') {
+                        codeBox.classList.add('d-none')
+                        if (VerifyButton.classList.contains('d-none')) {
+                            VerifyButton.classList.remove('d-none')
+                        }
+                    } else {
+                        VerifyButton.classList.add('d-none')
+                        if (VerifyInput.value.length > 0) {
+                            codeBox.innerHTML = `<p class="text-center w-100 border-0 m-auto mt-4">${data}</p>`
+                        } else {
+                            codeBox.classList.add('d-none')
+                        }
+                    }
+                },
+                error: (err) => {
+                    console.log(err)
+                }
+            })
+        }
+        VerifyInput.addEventListener('keyup', e => {
+            if (codeBox.classList.contains('d-none')) {
+                codeBox.classList.remove('d-none')
+            }
+            sendCode(e.target.value)
+        })
+    </script>
+{% endblock %}
