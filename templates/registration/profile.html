@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'registration/base_registration.html' %}
 
 {% load static %}
 {% load gravatar %}
@@ -11,15 +11,15 @@
     <link rel="stylesheet" type="text/css" href="{% static 'registration/css/profile.css' %}">
 {% endblock %}
 
-{% block content %}
+{% block r_content %}
     <section class="py-5 bg-light mt-80">
         <div class="container py-5">
             <div class="bg-white shadow rounded d-block d-md-flex">
                 <div class=" profile-tab-nav border-right p-0">
                     <div class="p-4">
                         <div class="img-circle text-center mb-3">
-                            <img src="{% gravatar_url user.email %}" alt="{{ user.username }}"
-                                 class="shadow">
+{#                            <img src="{% gravatar_url user.email %}" alt="{{ user.username }}"#}
+{#                                 class="shadow">#}
                         </div>
                         <h4 class="text-center">{{ user.username }}</h4>
                     </div>
@@ -28,16 +28,6 @@
                            aria-controls="account" aria-selected="true">
                             <i class="fa fa-user-circle text-center mr-1"></i>
                             <h6 class="me-2 mb-0">Profile</h6>
-                        </a>
-                        <a class="d-flex nav-link" id="order-tab" data-toggle="pill" href="#order" role="tab"
-                           aria-controls="order" aria-selected="false">
-                            <i class="fa fa-shopping-basket text-center mr-1"></i>
-                            <h6 class="me-2 mb-0">Orders</h6>
-                        </a>
-                        <a class="d-flex nav-link" id="comment-tab" data-toggle="pill" href="#comment" role="tab"
-                           aria-controls="comment" aria-selected="false">
-                            <i class="fa fa-comment text-center mr-1"></i>
-                            <h6 class="me-2 mb-0">Comments</h6>
                         </a>
                         <a class="d-flex nav-link"
                            href="{% url 'accounts:password-change' %}">

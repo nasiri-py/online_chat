@@ -80,7 +80,7 @@
                     </div>
                 </div>
                 <div class="card-body contacts_body">
-                    <ul class="contacts" id="members-list">
+                    <ui class="contacts">
                         {% for member in members %}
                             <li class="{% if member.chat.id == chatObject.id %}active{% endif %}">
                                 <a href="{% url 'chat:group' member.chat.unique_code %}" class="d-flex bd-highlight">
@@ -120,7 +120,7 @@
                                 </div>
                             </a>
                         </li>
-                    </ul>
+                    </ui>
                 </div>
             </div>
         </div>
@@ -143,121 +143,38 @@
         <div class="modal fade" id="NewGroupModalCenter" tabindex="-1" role="dialog"
              aria-labelledby="NewGroupModalCenterTitle" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
+                        <form action="{% url 'chat:create_group' %}" method="POST">
                 <div class="modal-content add-chat-modal bg-dark">
                     <div class="modal-body">
-                        <form action="{% url 'chat:create_group' %}" method="POST">
                             {% csrf_token %}
                             <div class="form-group">
                                 <label for="id_group_name">Group Name</label>
                                 <input type="text" class="form-control new-chat-form" name="group_name"
                                        id="id_group_name">
                             </div>
-                        </form>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary">Create</button>
                     </div>
                 </div>
+                        </form>
             </div>
         </div>
         <div class="col-md-8 col-xl-6 chat">
             <div class="card">
-                <div class="card-header msg_head d-flex justify-content-between">
-                    <div class="d-flex bd-highlight">
-                        <div class="img_cont">
-                            <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
-                                 class="rounded-circle user_img">
-                        </div>
-                        <div class="user_info">
-                            <span>{{ chatObject.title }}</span>
-                            <p>{{ chatObject.members.all.count }} member{% if chatObject.members.all.count > 1 %}s{% endif %}</p>
-                        </div>
-                        <div class="video_cam">
-                            <span><i class="fas fa-video"></i></span>
-                            <span><i class="fas fa-phone"></i></span>
-                        </div>
-                    </div>
-                    <div class="dropstart">
-                        <a type="button" data-bs-toggle="dropdown"
-                           aria-expanded="false">
-                            <span id="action_menu_btn"><i class="fas fa-ellipsis-v"></i></span>
-                        </a>
-                        <div class="action_menu dropdown-menu me-3">
-                            <ul>
-                                <li class="text-danger">
-                                    <a class="d-flex align-items-baseline" type="button" data-toggle="modal"
-                                       data-target="#LeaveGroupModalCenter">
-                                        <i class="fas fa-sign-out-alt"></i> Leave group
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal fade" id="LeaveGroupModalCenter" tabindex="-1" role="dialog"
-                     aria-labelledby="LeaveGroupModalCenterTitle" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered" role="document">
-                        <div class="modal-content add-chat-modal bg-dark">
-                            <div class="modal-body">
-                                <p>Are you sure you want to leave this group?</p>
-                                {% if chatObject.creator_id == user.id %}
-                                    <p class="text-danger mt-2">If you leave this group it will be deleted.</p>
-                                {% endif %}
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                <a href="{% url 'chat:leave_group' chatObject.unique_code %}" class="btn btn-danger">Leave</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body msg_card_body" id="messages-list">
-                    {% for message in chatObject.message_set.all %}
-                        <div class="media">
-                            <div class="media-body">
-                                {% if message.author_id == user.id %}
-                                    <div class="d-flex justify-content-end mb-4">
-                                        <div class="msg_cotainer_send pb-3">
-                                            <p class="mb-1">{{ message.text }}</p>
-                                            <span class="msg_time_send">8:55 AM, Today</span>
-                                        </div>
-                                    </div>
-                                {% else %}
-                                    <div class="d-flex justify-content-start mb-4">
-                                        <div class="img_cont_msg">
-                                            <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
-                                                 class="rounded-circle user_img_msg">
-                                        </div>
-                                        <div class="msg_cotainer pb-3">
-                                            <h6>{{ message.author }}</h6>
-                                            <p class="mb-1">{{ message.text }}</p>
-                                            <span class="msg_time">8:40 AM, Today</span>
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-                <div class="card-footer">
-                    <div class="input-group">
-                        <div class="input-group-append">
-                            <span class="input-group-text attach_btn"><i class="fas fa-paperclip"></i></span>
-                        </div>
-                        <input id="msg-input" type="text" class="form-control type_msg"
-                               placeholder="Type your message..." aria-label="Message Text"
-                               aria-describedby="addon-wrapping">
-                        <div class="input-group-append">
-                            <button id="msg-submit" type="button" class="input-group-text send_btn" onclick="btnSend()">
-                                <i class="fas fa-location-arrow"></i></button>
-                        </div>
-                    </div>
+                <div class="card-body msg_card_body">
+                    <p class="start-msg">Select a chat to start messaging</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<a class="d-flex align-items-baseline" type="button" data-toggle="modal"
+                       data-target="#NewGroupModalCenter">
+                        <i class="fas fa-users"></i>
+                        <p class="ms-3">New Group</p>
+                    </a>
 <script>
     var chat_id = {{ chat_id_json }};
     var msgdiv = $('#messages-list');
@@ -269,7 +186,7 @@
 
     var socket = new WebSocket(
         'ws://' + window.location.host +
-        '/ws/group/' + chat_id + '/');
+        '/ws/chat/' + chat_id + '/');
 
     socket.onmessage = function (e) {
         var message = JSON.parse(e.data);
@@ -305,8 +222,8 @@
 						<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img_msg">
 					</div>
                     <div class="msg_cotainer pb-3">
-                        <h6>USERNAME</h6>
-                            <p class="mb-1">MESSAGE</p>
+                        <h6 class="my-0"><strong>USERNAME</strong></h6>
+                            <p>MESSAGE</p>
                         <span class="msg_time">8:40 AM, Today</span>
                     </div>
                   </div>
@@ -336,7 +253,8 @@
         msgdiv.append(`
             <div class="d-flex justify-content-end mb-4">
                 <div class="msg_cotainer_send pb-3">
-                    <p class="mb-1">MESSAGE</p>
+                    <h6 class="my-0 text-success"><strong>You</strong></h6>
+                    <p>MESSAGE</p>
                     <span class="msg_time_send">8:55 AM, Today</span>
                 </div>
             </div>

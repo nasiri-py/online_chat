@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     # third party
     'channels',
     'widget_tweaks',
+    'django_gravatar',
 
     # my apps
     'chat',
