@@ -30,8 +30,15 @@ class Member(models.Model):
         return self.user.username
 
 
-class Message(models.Model):
+class GroupMessage(models.Model):
     chat = models.ForeignKey(GroupChat, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
+    text = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+
+
+class RoomMessage(models.Model):
+    contact = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='room_messages')
     text = models.TextField()
     created = models.DateTimeField(auto_now_add=True)

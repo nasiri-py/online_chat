@@ -1,14 +1,17 @@
-from django.shortcuts import render, HttpResponse, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
-from chat.models import Member, GroupChat
+from django.contrib.auth import get_user_model
 from django.db.models import Q
+from chat.models import Member, GroupChat
 from django.contrib.auth.decorators import login_required
 from django.utils.safestring import mark_safe
-from django.contrib.auth import authenticate, login, logout
-import json
-
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+import json
+
+from .models import RoomMessage
+
+User = get_user_model()
 
 
 @login_required
@@ -35,7 +38,7 @@ def group(request, chat_id):
         if Member.objects.filter(chat_id=chat.id, user_id=current_user.id).count() == 0:
             return render(request, 'chat/join_group.html', {'chatObject': chat})
 
-        return render(request, 'chat/join_chat.html',
+        return render(request, 'chat/group.html',
                       {'chatObject': chat, 'chat_id_json': mark_safe(json.dumps(chat.unique_code)), 'members': Member.objects.filter(user_id=current_user.id)})
     elif request.method == "POST":
         if Member.objects.filter(chat_id=chat.id, user_id=current_user.id).exists() >= 1:
@@ -52,7 +55,7 @@ def group(request, chat_id):
             }
         )
 
-        return render(request, 'chat/join_chat.html',
+        return render(request, 'chat/group.html',
                       {'chatObject': chat, 'chat_id_json': mark_safe(json.dumps(chat.unique_code)), 'members': Member.objects.filter(user_id=current_user.id)})
 
 
@@ -86,3 +89,12 @@ def leave_group(request, chat_id):
         )
 
     return redirect('chat:index')
+
+
+@login_required
+def room(request, username):
+    contact = get_object_or_404(User, username=username)
+    messages = RoomMessage.objects.filter((Q(contact=contact) & Q(author=request.user)) | (Q(contact=request.user) & Q(author=contact))).order_by('created')
+    return render(request, 'chat/room.html', {'contact': contact, 'messages': messages,
+                                              'contact_json': mark_safe(json.dumps(contact.username)),
+                                              'user_json': mark_safe(json.dumps(request.user.username))})

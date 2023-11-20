@@ -81,19 +81,6 @@
                 </div>
                 <div class="card-body contacts_body">
                     <ul class="contacts" id="members-list">
-                        {% for member in members %}
-                            <li class="{% if member.chat.id == chatObject.id %}active{% endif %}">
-                                <a href="{% url 'chat:group' member.chat.unique_code %}" class="d-flex bd-highlight">
-                                    <div class="img_cont">
-                                        <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
-                                             class="rounded-circle user_img">
-                                    </div>
-                                    <div class="user_info">
-                                        <span>{{ member.chat.title }}</span>
-                                    </div>
-                                </a>
-                            </li>
-                        {% endfor %}
                         <li class="active">
                             <a href="" class="d-flex bd-highlight">
                                 <div class="img_cont">
@@ -165,18 +152,27 @@
             <div class="card">
                 <div class="card-header msg_head d-flex justify-content-between">
                     <div class="d-flex bd-highlight">
+                    {% if contact.username == user.username %}
+                        <div class="user_info">
+                            <span>
+                                Saved Messages
+                            </span>
+                        </div>
+                    {% else %}
                         <div class="img_cont">
                             <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
                                  class="rounded-circle user_img">
                         </div>
                         <div class="user_info">
-                            <span>{{ chatObject.title }}</span>
-                            <p>{{ chatObject.members.all.count }} member{% if chatObject.members.all.count > 1 %}s{% endif %}</p>
+                            <span>
+                                {{ contact.username }}
+                            </span>
                         </div>
                         <div class="video_cam">
                             <span><i class="fas fa-video"></i></span>
                             <span><i class="fas fa-phone"></i></span>
                         </div>
+                    {% endif %}
                     </div>
                     <div class="dropstart">
                         <a type="button" data-bs-toggle="dropdown"
@@ -186,37 +182,17 @@
                         <div class="action_menu dropdown-menu me-3">
                             <ul>
                                 <li class="text-danger">
-                                    <a class="d-flex align-items-baseline" type="button" data-toggle="modal"
-                                       data-target="#LeaveGroupModalCenter">
-                                        <i class="fas fa-sign-out-alt"></i> Leave group
-                                    </a>
+                                    <i class="fas fa-sign-out-alt"></i> Block user
                                 </li>
                             </ul>
                         </div>
                     </div>
                 </div>
-                <div class="modal fade" id="LeaveGroupModalCenter" tabindex="-1" role="dialog"
-                     aria-labelledby="LeaveGroupModalCenterTitle" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered" role="document">
-                        <div class="modal-content add-chat-modal bg-dark">
-                            <div class="modal-body">
-                                <p>Are you sure you want to leave this group?</p>
-                                {% if chatObject.creator_id == user.id %}
-                                    <p class="text-danger mt-2">If you leave this group it will be deleted.</p>
-                                {% endif %}
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                <a href="{% url 'chat:leave_group' chatObject.unique_code %}" class="btn btn-danger">Leave</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 <div class="card-body msg_card_body" id="messages-list">
-                    {% for message in chatObject.message_set.all %}
+                    {% for message in messages %}
                         <div class="media">
                             <div class="media-body">
-                                {% if message.author_id == user.id %}
+                                {% if message.author == user %}
                                     <div class="d-flex justify-content-end mb-4">
                                         <div class="msg_cotainer_send pb-3">
                                             <p class="mb-1">{{ message.text }}</p>
@@ -225,12 +201,7 @@
                                     </div>
                                 {% else %}
                                     <div class="d-flex justify-content-start mb-4">
-                                        <div class="img_cont_msg">
-                                            <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
-                                                 class="rounded-circle user_img_msg">
-                                        </div>
                                         <div class="msg_cotainer pb-3">
-                                            <h6>{{ message.author }}</h6>
                                             <p class="mb-1">{{ message.text }}</p>
                                             <span class="msg_time">8:40 AM, Today</span>
                                         </div>
@@ -259,7 +230,8 @@
     </div>
 </div>
 <script>
-    var chat_id = {{ chat_id_json }};
+    var receiver = {{ contact_json }};
+    var sender = {{ user_json }};
     var msgdiv = $('#messages-list');
     var memberdiv = $('#members-list');
 
@@ -269,54 +241,23 @@
 
     var socket = new WebSocket(
         'ws://' + window.location.host +
-        '/ws/group/' + chat_id + '/');
+        '/ws/room/' + sender + '/');
+
+    if (sender !== receiver) {
 
     socket.onmessage = function (e) {
         var message = JSON.parse(e.data);
-        switch (message['type']) {
-            case "join":
-                memberdiv.append(`
-                    <li id="item-USERNAME" href="#" class="list-group-item">USERNAME</li>
-                `.replace('USERNAME', message['username']).replace('USERNAME', message['username']));
-
-                msgdiv.append(`
-                    <div class="mx-auto" style="width: max-content;">
-                        USERNAME joined the group
-                    </div>
-                `.replace('USERNAME', message['username']));
-                break;
-            case "leave":
-                $('#item-' + message['username']).remove();
-
-                msgdiv.append(`
-                    <div class="mx-auto" style="width: max-content;">
-                        USERNAME left the group
-                    </div>
-                `.replace('USERNAME', message['username']));
-                break;
-            case "delete":
-                alert('Group was deleted by its creator.');
-                window.location.href = window.location.origin + '/chat/';
-                break;
-            case "msg":
-                msgdiv.append(`
-                  <div class="d-flex justify-content-start mb-4">
-                    <div class="img_cont_msg">
-						<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img_msg">
-					</div>
-                    <div class="msg_cotainer pb-3">
-                        <h6>USERNAME</h6>
-                            <p class="mb-1">MESSAGE</p>
-                        <span class="msg_time">8:40 AM, Today</span>
-                    </div>
-                  </div>
-                `.replace('USERNAME', message['sender']).replace('MESSAGE', message['text']));
-                break;
-            default:
-                break;
-        }
+        msgdiv.append(`
+          <div class="d-flex justify-content-start mb-4">
+            <div class="msg_cotainer pb-3">
+                <p class="mb-1">MESSAGE</p>
+                <span class="msg_time">8:40 AM, Today</span>
+            </div>
+          </div>
+        `.replace('MESSAGE', message['text']));
         msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
     };
+    }
 
     socket.onclose = function (e) {
         console.error('Socket closed unexpectedly');
@@ -344,7 +285,7 @@
 
         msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
 
-        socket.send(JSON.stringify({'text': message}));
+        socket.send(JSON.stringify({'sender': sender, 'receiver': receiver, 'text': message}));
 
         messageInputDom.value = '';
     };
