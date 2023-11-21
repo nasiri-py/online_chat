@@ -90,6 +90,14 @@
                                     <div class="img_cont">
                                         <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
                                              class="rounded-circle user_img">
+                                        {% if member.category == 'r' %}
+                                            {% online_status member.slug as online %}
+                                            {% if online %}
+                                                <span id="{{ member.slug }}_status" class="online_icon"></span>
+                                            {% else %}
+                                                <span id="{{ member.slug }}_status" class=""></span>
+                                            {% endif %}
+                                        {% endif %}
                                     </div>
                                     <div class="user_info">
                                         <span>
@@ -101,32 +109,6 @@
                                 </a>
                             </li>
                         {% endfor %}
-                        <li class="active">
-                            <a href="" class="d-flex bd-highlight">
-                                <div class="img_cont">
-                                    <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
-                                         class="rounded-circle user_img">
-                                    <span class="online_icon"></span>
-                                </div>
-                                <div class="user_info">
-                                    <span>Khalid</span>
-                                    <p>online</p>
-                                </div>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="" class="d-flex bd-highlight">
-                                <div class="img_cont">
-                                    <img src="https://static.turbosquid.com/Preview/001214/650/2V/boy-cartoon-3D-model_D.jpg"
-                                         class="rounded-circle user_img">
-                                    <span class="online_icon offline"></span>
-                                </div>
-                                <div class="user_info">
-                                    <span>Rashid Samim</span>
-                                    <p>last seen at 15:02</p>
-                                </div>
-                            </a>
-                        </li>
                     </ul>
                 </div>
             </div>
@@ -178,7 +160,7 @@
                         </div>
                         <div class="user_info">
                             <span>{{ chatObject.title }}</span>
-                            <p>{{ chatObject.members.all.count }} member{% if chatObject.members.all.count > 1 %}s{% endif %}</p>
+                            <p>members</p>
                         </div>
                         <div class="video_cam">
                             <span><i class="fas fa-video"></i></span>
@@ -358,6 +340,46 @@
 
         messageInputDom.value = '';
     };
+</script>
+<script>
+    const loggedin_user = {{ username_json }}
+    const online_status = new WebSocket(
+        'ws://'
+        + window.location.host
+        + '/ws'
+        + '/online/'
+    )
+
+    online_status.onopen = function (e) {
+        online_status.send(JSON.stringify({
+            'username': loggedin_user,
+            'type': 'open'
+        }))
+    }
+
+    window.addEventListener("beforeunload", function (e) {
+        online_status.send(JSON.stringify({
+            'username': loggedin_user,
+            'type': 'close'
+        }))
+    })
+
+    online_status.onclose = function (e) {
+        console.log('Disconnected from online consumer')
+    }
+
+    online_status.onmessage = function (e) {
+        var data = JSON.parse(e.data)
+        if (data.username != loggedin_user) {
+            const user_to_change = $(`#${data.username}_status`)
+            console.log(user_to_change)
+            if (data.online_status == true) {
+                user_to_change.addClass('online_icon');
+            } else {
+                user_to_change.removeClass('online_icon');
+            }
+        }
+    }
 </script>
 </body>
 </html>

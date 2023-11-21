@@ -85,14 +85,19 @@
                     <ul class="contacts" id="members-list">
                         {% for member in members %}
                             <li class="{% if member.slug in request.path %}active{% endif %}">
-                                <a href="
-
-
-                                        {% if member.category == 'g' %}{% url 'chat:group' member.slug %}{% else %}{% url 'chat:room' member.slug %}{% endif %}"
+                                <a href="{% if member.category == 'g' %}{% url 'chat:group' member.slug %}{% else %}{% url 'chat:room' member.slug %}{% endif %}"
                                    class="d-flex bd-highlight">
                                     <div class="img_cont">
                                         <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
                                              class="rounded-circle user_img">
+                                        {% if member.category == 'r' %}
+                                            {% online_status member.slug as online %}
+                                            {% if online %}
+                                                <span id="{{ member.slug }}_status" class="online_icon"></span>
+                                            {% else %}
+                                                <span id="{{ member.slug }}_status" class=""></span>
+                                            {% endif %}
+                                        {% endif %}
                                     </div>
                                     <div class="user_info">
                                         <span>
@@ -105,32 +110,6 @@
                                 </a>
                             </li>
                         {% endfor %}
-                        <li class="active">
-                            <a href="" class="d-flex bd-highlight">
-                                <div class="img_cont">
-                                    <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
-                                         class="rounded-circle user_img">
-                                    <span class="online_icon"></span>
-                                </div>
-                                <div class="user_info">
-                                    <span>Khalid</span>
-                                    <p>online</p>
-                                </div>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="" class="d-flex bd-highlight">
-                                <div class="img_cont">
-                                    <img src="https://static.turbosquid.com/Preview/001214/650/2V/boy-cartoon-3D-model_D.jpg"
-                                         class="rounded-circle user_img">
-                                    <span class="online_icon offline"></span>
-                                </div>
-                                <div class="user_info">
-                                    <span>Rashid Samim</span>
-                                    <p>last seen at 15:02</p>
-                                </div>
-                            </a>
-                        </li>
                     </ul>
                 </div>
             </div>
@@ -188,9 +167,14 @@
                                      class="rounded-circle user_img">
                             </div>
                             <div class="user_info">
-                            <span>
-                                {{ contact.username }}
-                            </span>
+                                <span>
+                                    {{ contact.username }}
+                                </span>
+                                {% if contact.onlinestatus.online_status %}
+                                    <p id="{{ contact.username }}_small">online</p>
+                                {% else %}
+                                    <p id="{{ contact.username }}_small">offline</p>
+                                {% endif %}
                             </div>
                             <div class="video_cam">
                                 <span><i class="fas fa-video"></i></span>
@@ -316,6 +300,48 @@
 
         messageInputDom.value = '';
     };
+</script>
+<script>
+    const loggedin_user = {{ username_json }}
+    const online_status = new WebSocket(
+        'ws://'
+        + window.location.host
+        + '/ws'
+        + '/online/'
+    )
+
+    online_status.onopen = function (e) {
+        online_status.send(JSON.stringify({
+            'username': loggedin_user,
+            'type': 'open'
+        }))
+    }
+
+    window.addEventListener("beforeunload", function (e) {
+        online_status.send(JSON.stringify({
+            'username': loggedin_user,
+            'type': 'close'
+        }))
+    })
+
+    online_status.onclose = function (e) {
+        console.log('Disconnected from online consumer')
+    }
+
+    online_status.onmessage = function (e) {
+        var data = JSON.parse(e.data)
+        if (data.username != loggedin_user) {
+            const user_to_change = $(`#${data.username}_status`)
+            const small_status_to_change = $(`#${data.username}_small`)
+            if (data.online_status == true) {
+                user_to_change.addClass('online_icon');
+                small_status_to_change.html('online');
+            } else {
+                user_to_change.removeClass('online_icon');
+                small_status_to_change.html('offline');
+            }
+        }
+    }
 </script>
 </body>
 </html>

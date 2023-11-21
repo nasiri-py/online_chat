@@ -60,3 +60,11 @@ class Notif(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     last_text = models.TextField()
     updated = models.DateTimeField(auto_now=True)
+
+
+class UserOnlineStatus(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='onlinestatus')
+    online_status = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'{self.user.username} - {self.online_status}'

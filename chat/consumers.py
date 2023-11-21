@@ -1,10 +1,10 @@
-from channels.generic.websocket import StopConsumer, AsyncConsumer
+from channels.generic.websocket import StopConsumer, AsyncConsumer, AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 import json
 from datetime import datetime
 
-from .models import GroupChat, Message, Member, Notif
+from .models import GroupChat, Message, Member, Notif, UserOnlineStatus
 
 User = get_user_model()
 
@@ -95,11 +95,11 @@ class GroupConsumer(AsyncConsumer):
     @database_sync_to_async
     def update_member(self):
         try:
-            member = Member.objects.get(slug=self.chat_id, user=self.user.id, category='g')
+            member = Member.objects.get(slug=self.chat_id, user=self.user, category='g')
             member.updated = datetime.now()
             member.save()
         except Member.DoesNotExist:
-            Member.objects.create(title=self.chat_id, slug=self.chat_id, user=self.user.id, category='g')
+            Member.objects.create(title=self.chat_id, slug=self.chat_id, user=self.user, category='g')
 
 
 class RoomConsumer(AsyncConsumer):
@@ -184,9 +184,56 @@ class RoomConsumer(AsyncConsumer):
     @database_sync_to_async
     def update_member(self):
         try:
-            member = Member.objects.get(slug=self.contact, user=self.user.id, category='r')
-            member.updated = datetime.now()
-            member.save()
+            member1 = Member.objects.get(slug=self.contact, user=self.user, category='r')
+            member2 = Member.objects.get(slug=self.user.username, user__username=self.contact, category='r')
+            member1.updated = datetime.now()
+            member2.updated = datetime.now()
+            member1.save()
+            member2.save()
         except Member.DoesNotExist:
-            Member.objects.create(title=self.contact, slug=self.contact, user=self.user.id, category='r')
+            Member.objects.create(title=self.contact, slug=self.contact, user=self.user, category='r')
 
+
+class UserOnlineStatusConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.room_group_name = 'user'
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+        await self.accept()
+
+    async def disconnect(self, code):
+        self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
+
+    async def receive(self, text_data=None, bytes_data=None):
+        if text_data:
+            text_data_json = json.loads(text_data)
+            username = text_data_json['username']
+            connection_type = text_data_json['type']
+            await self.change_online_status(username, connection_type)
+
+    @database_sync_to_async
+    def change_online_status(self, username, c_type):
+        try:
+            user_online_status = UserOnlineStatus.objects.get(user__username=username)
+        except UserOnlineStatus.DoesNotExist:
+            user_online_status = UserOnlineStatus.objects.create(user__username=username)
+        if c_type == 'open':
+            user_online_status.online_status = True
+            user_online_status.save()
+        else:
+            user_online_status.online_status = False
+            user_online_status.save()
+
+    async def send_user_online_status(self, event):
+        data = json.loads(event.get('value'))
+        username = data['username']
+        online_status = data['status']
+        await self.send(text_data=json.dumps({
+            'username': username,
+            'online_status': online_status
+        }))

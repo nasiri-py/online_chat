@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.db.models import Q
-from chat.models import Member, GroupChat, Message, Notif
+from chat.models import Member, GroupChat, Message, Notif, UserOnlineStatus
 from django.contrib.auth.decorators import login_required
 from django.utils.safestring import mark_safe
 from channels.layers import get_channel_layer
@@ -14,8 +14,9 @@ User = get_user_model()
 
 @login_required
 def index(request):
-    current_user = request.user
-    return render(request, 'chat/index.html', {'members': Member.objects.filter(user_id=request.user.id).order_by('-updated'), 'notifs': Notif.objects.all()})
+    return render(request, 'chat/index.html',
+                  {'members': Member.objects.filter(user_id=request.user.id).order_by('-updated'), 'notifs': Notif.objects.all(),
+                   'username_json': mark_safe(json.dumps(request.user.username))})
 
 
 @login_required
@@ -38,14 +39,14 @@ def group(request, chat_id):
         if member.exists():
             return render(request, 'chat/group.html',
                           {'chatObject': chat, 'messages': messages, 'chat_id_json': mark_safe(json.dumps(chat.unique_code)),
-                           'members': Member.objects.filter(user_id=request.user.id).order_by('-updated'), 'notifs': Notif.objects.all()})
+                           'members': Member.objects.filter(user_id=request.user.id).order_by('-updated'), 'notifs': Notif.objects.all(), 'username_json': mark_safe(json.dumps(request.user.username))})
         return render(request, 'chat/join_group.html', {'chatObject': chat})
 
     elif request.method == "POST":
         if member.exists():
             return render(request, 'chat/group.html',
                           {'chatObject': chat, 'messages': messages, 'chat_id_json': mark_safe(json.dumps(chat.unique_code)),
-                           'members': Member.objects.filter(user_id=request.user.id).order_by('-updated'), 'notifs': Notif.objects.all()})
+                           'members': Member.objects.filter(user_id=request.user.id).order_by('-updated'), 'notifs': Notif.objects.all(), 'username_json': mark_safe(json.dumps(request.user.username))})
         Member.objects.create(title=chat.title, slug=chat.unique_code, user_id=current_user.id, category='g')
 
         channel_layer = get_channel_layer()
@@ -58,7 +59,7 @@ def group(request, chat_id):
         )
 
         return render(request, 'chat/group.html',
-                      {'chatObject': chat, 'messages': messages, 'chat_id_json': mark_safe(json.dumps(chat.unique_code)), 'members': Member.objects.filter(user_id=request.user.id).order_by('-updated'), 'notifs': Notif.objects.all()})
+                      {'chatObject': chat, 'messages': messages, 'chat_id_json': mark_safe(json.dumps(chat.unique_code)), 'members': Member.objects.filter(user_id=request.user.id).order_by('-updated'), 'notifs': Notif.objects.all(), 'username_json': mark_safe(json.dumps(request.user.username))})
 
 
 @login_required
@@ -105,4 +106,4 @@ def room(request, username):
     notifs = Notif.objects.all()
     return render(request, 'chat/room.html', {'contact': contact, 'messages': messages, 'members': members, 'notifs': notifs,
                                               'contact_json': mark_safe(json.dumps(contact.username)),
-                                              'user_json': mark_safe(json.dumps(request.user.username))})
+                                              'user_json': mark_safe(json.dumps(request.user.username)), 'username_json': mark_safe(json.dumps(request.user.username))})
