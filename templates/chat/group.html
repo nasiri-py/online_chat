@@ -1,5 +1,7 @@
 {% load static %}
 
+{% load base_tags %}
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -82,14 +84,19 @@
                 <div class="card-body contacts_body">
                     <ul class="contacts" id="members-list">
                         {% for member in members %}
-                            <li class="{% if member.chat.id == chatObject.id %}active{% endif %}">
-                                <a href="{% url 'chat:group' member.chat.unique_code %}" class="d-flex bd-highlight">
+                            <li class="{% if member.slug == chatObject.unique_code %}active{% endif %}">
+                                <a href="{% if member.category == 'g' %}{% url 'chat:group' member.slug %}{% else %}{% url 'chat:room' member.slug %}{% endif %}"
+                                   class="d-flex bd-highlight">
                                     <div class="img_cont">
                                         <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
                                              class="rounded-circle user_img">
                                     </div>
                                     <div class="user_info">
-                                        <span>{{ member.chat.title }}</span>
+                                        <span>
+                                            {% if member.slug == user.username and member.user == user %}Saved Messages{% else %}
+                                                {{ member.title }}{% endif %}
+                                        </span>
+                                        <p id="last-text">{% notif_filter member.slug user.username %}</p>
                                     </div>
                                 </a>
                             </li>
@@ -213,7 +220,7 @@
                     </div>
                 </div>
                 <div class="card-body msg_card_body" id="messages-list">
-                    {% for message in chatObject.groupmessage_set.all %}
+                    {% for message in messages %}
                         <div class="media">
                             <div class="media-body">
                                 {% if message.author_id == user.id %}
@@ -262,6 +269,7 @@
     var chat_id = {{ chat_id_json }};
     var msgdiv = $('#messages-list');
     var memberdiv = $('#members-list');
+    var lasttesxt = $('#last-text')
 
     window.onload = function (e) {
         msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
@@ -299,6 +307,7 @@
                 window.location.href = window.location.origin + '/chat/';
                 break;
             case "msg":
+                lasttesxt.text(message['text']);
                 msgdiv.append(`
                   <div class="d-flex justify-content-start mb-4">
                     <div class="img_cont_msg">
@@ -333,6 +342,7 @@
         var messageInputDom = document.querySelector('#msg-input');
         var message = messageInputDom.value;
 
+        lasttesxt.text(message);
         msgdiv.append(`
             <div class="d-flex justify-content-end mb-4">
                 <div class="msg_cotainer_send pb-3">

@@ -2,8 +2,9 @@ from channels.generic.websocket import StopConsumer, AsyncConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 import json
+from datetime import datetime
 
-from .models import GroupChat, GroupMessage, RoomMessage
+from .models import GroupChat, Message, Member, Notif
 
 User = get_user_model()
 
@@ -45,6 +46,7 @@ class GroupConsumer(AsyncConsumer):
             text = text_data_json['text']
 
             await self.create_message(text)
+            await self.update_member()
 
             await self.channel_layer.group_send(
                 self.group_name,
@@ -82,14 +84,28 @@ class GroupConsumer(AsyncConsumer):
 
     @database_sync_to_async
     def create_message(self, text):
-        GroupMessage.objects.create(chat_id=self.chat.id, author_id=self.user.id, text=text)
+        try:
+            notif = Notif.objects.get(slug=self.chat_id, category='g')
+        except Notif.DoesNotExist:
+            notif = Notif.objects.create(slug=self.chat_id, category='g')
+        notif.last_text = text
+        notif.save()
+        Message.objects.create(slug=self.chat_id, author_id=self.user.id, text=text)
+
+    @database_sync_to_async
+    def update_member(self):
+        try:
+            member = Member.objects.get(slug=self.chat_id, user=self.user.id, category='g')
+            member.updated = datetime.now()
+            member.save()
+        except Member.DoesNotExist:
+            Member.objects.create(title=self.chat_id, slug=self.chat_id, user=self.user.id, category='g')
 
 
 class RoomConsumer(AsyncConsumer):
     async def websocket_connect(self, event):
         self.user = self.scope['user']
         self.author = self.scope['url_route']['kwargs']['username']
-        print(self.author)
         self.author_id = await self.get_author_id()
         self.room_name = f"chat_{self.author}"
 
@@ -116,18 +132,18 @@ class RoomConsumer(AsyncConsumer):
         if text_data:
             text_data_json = json.loads(text_data)
             self.contact = text_data_json['receiver']
-            print(self.contact)
             self.contact_id = await self.get_contact_id()
             user_room_name = f'chat_{self.contact}'
             text = text_data_json['text']
 
             await self.create_message(text)
+            await self.update_member()
 
             await self.channel_layer.group_send(
                 user_room_name,
                 {
                     'type': 'chat_message',
-                    'message': text_data,
+                    'message': text_data
                 }
             )
 
@@ -157,5 +173,20 @@ class RoomConsumer(AsyncConsumer):
 
     @database_sync_to_async
     def create_message(self, text):
-        RoomMessage.objects.create(contact_id=self.author_id, author_id=self.contact_id, text=text)
+        try:
+            notif = Notif.objects.get(slug=self.contact, category='r')
+        except Notif.DoesNotExist:
+            notif = Notif.objects.create(slug=self.contact, category='r')
+        notif.last_text = text
+        notif.save()
+        Message.objects.create(slug=self.contact, author_id=self.user.id, text=text)
+
+    @database_sync_to_async
+    def update_member(self):
+        try:
+            member = Member.objects.get(slug=self.contact, user=self.user.id, category='r')
+            member.updated = datetime.now()
+            member.save()
+        except Member.DoesNotExist:
+            Member.objects.create(title=self.contact, slug=self.contact, user=self.user.id, category='r')
 

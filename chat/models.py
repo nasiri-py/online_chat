@@ -1,5 +1,6 @@
 from django.db import models
 import random
+import string
 
 from django.contrib.auth import get_user_model
 
@@ -7,7 +8,7 @@ User = get_user_model()
 
 
 def unique_generator(length=10):
-    source = "abcdefghijklmnopqrstuvwxyz"
+    source = string.ascii_letters + string.digits
     result = ""
     for _ in range(length):
         result += source[random.randint(0, length)]
@@ -16,29 +17,46 @@ def unique_generator(length=10):
 
 class GroupChat(models.Model):
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
-    title = models.CharField(max_length=100)
-    unique_code = models.CharField(max_length=10, default=unique_generator)
+    title = models.CharField(max_length=150)
+    unique_code = models.CharField(max_length=10, default=unique_generator, unique=True)
     created = models.DateTimeField(auto_now_add=True)
 
 
 class Member(models.Model):
-    chat = models.ForeignKey(GroupChat, on_delete=models.CASCADE, related_name='members')
+    CATEGORY_CHOICES = (
+        ('g', 'group'),
+        ('r', 'room')
+    )
+    title = models.CharField(max_length=150)
+    slug = models.CharField(max_length=150)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    category = models.CharField(max_length=1, choices=CATEGORY_CHOICES)
     created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = [['slug', 'user', 'category']]
 
     def __str__(self):
-        return self.user.username
+        return f'{self.user.username} - {self.slug} - {self.updated}'
 
 
-class GroupMessage(models.Model):
-    chat = models.ForeignKey(GroupChat, on_delete=models.CASCADE)
+class Message(models.Model):
+    slug = models.CharField(max_length=150)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.TextField()
+    active = models.BooleanField(default=True)
+    seen = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
 
 
-class RoomMessage(models.Model):
-    contact = models.ForeignKey(User, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='room_messages')
-    text = models.TextField()
+class Notif(models.Model):
+    CATEGORY_CHOICES = (
+        ('g', 'group'),
+        ('r', 'room')
+    )
+    slug = models.CharField(max_length=150)
+    category = models.CharField(max_length=1, choices=CATEGORY_CHOICES)
     created = models.DateTimeField(auto_now_add=True)
+    last_text = models.TextField()
+    updated = models.DateTimeField(auto_now=True)

@@ -1,5 +1,7 @@
 {% load static %}
 
+{% load base_tags %}
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -82,14 +84,19 @@
                 <div class="card-body contacts_body">
                     <ui class="contacts">
                         {% for member in members %}
-                            <li class="{% if member.chat.id == chatObject.id %}active{% endif %}">
-                                <a href="{% url 'chat:group' member.chat.unique_code %}" class="d-flex bd-highlight">
+                            <li>
+                                <a href="{% if member.category == 'g' %}{% url 'chat:group' member.slug %}{% else %}{% url 'chat:room' member.slug %}{% endif %}"
+                                   class="d-flex bd-highlight">
                                     <div class="img_cont">
                                         <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
                                              class="rounded-circle user_img">
                                     </div>
                                     <div class="user_info">
-                                        <span>{{ member.chat.title }}</span>
+                                        <span>
+                                            {% if member.slug == user.username and member.user == user %}Saved Messages{% else %}
+                                                {{ member.title }}{% endif %}
+                                        </span>
+                                        <p id="last-text">{% notif_filter member.slug user.username %}</p>
                                     </div>
                                 </a>
                             </li>
@@ -143,22 +150,22 @@
         <div class="modal fade" id="NewGroupModalCenter" tabindex="-1" role="dialog"
              aria-labelledby="NewGroupModalCenterTitle" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
-                        <form action="{% url 'chat:create_group' %}" method="POST">
-                <div class="modal-content add-chat-modal bg-dark">
-                    <div class="modal-body">
+                <form action="{% url 'chat:create_group' %}" method="POST">
+                    <div class="modal-content add-chat-modal bg-dark">
+                        <div class="modal-body">
                             {% csrf_token %}
                             <div class="form-group">
                                 <label for="id_group_name">Group Name</label>
                                 <input type="text" class="form-control new-chat-form" name="group_name"
                                        id="id_group_name">
                             </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Create</button>
+                        </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Create</button>
-                    </div>
-                </div>
-                        </form>
+                </form>
             </div>
         </div>
         <div class="col-md-8 col-xl-6 chat">
@@ -171,14 +178,15 @@
     </div>
 </div>
 <a class="d-flex align-items-baseline" type="button" data-toggle="modal"
-                       data-target="#NewGroupModalCenter">
-                        <i class="fas fa-users"></i>
-                        <p class="ms-3">New Group</p>
-                    </a>
+   data-target="#NewGroupModalCenter">
+    <i class="fas fa-users"></i>
+    <p class="ms-3">New Group</p>
+</a>
 <script>
     var chat_id = {{ chat_id_json }};
     var msgdiv = $('#messages-list');
     var memberdiv = $('#members-list');
+    var lasttesxt = $('#last-text')
 
     window.onload = function (e) {
         msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
@@ -186,7 +194,7 @@
 
     var socket = new WebSocket(
         'ws://' + window.location.host +
-        '/ws/chat/' + chat_id + '/');
+        '/ws/group/' + chat_id + '/');
 
     socket.onmessage = function (e) {
         var message = JSON.parse(e.data);
@@ -216,14 +224,15 @@
                 window.location.href = window.location.origin + '/chat/';
                 break;
             case "msg":
+                lasttesxt.text(message['text']);
                 msgdiv.append(`
                   <div class="d-flex justify-content-start mb-4">
                     <div class="img_cont_msg">
 						<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img_msg">
 					</div>
                     <div class="msg_cotainer pb-3">
-                        <h6 class="my-0"><strong>USERNAME</strong></h6>
-                            <p>MESSAGE</p>
+                        <h6>USERNAME</h6>
+                            <p class="mb-1">MESSAGE</p>
                         <span class="msg_time">8:40 AM, Today</span>
                     </div>
                   </div>
@@ -250,11 +259,11 @@
         var messageInputDom = document.querySelector('#msg-input');
         var message = messageInputDom.value;
 
+        lasttesxt.text(message);
         msgdiv.append(`
             <div class="d-flex justify-content-end mb-4">
                 <div class="msg_cotainer_send pb-3">
-                    <h6 class="my-0 text-success"><strong>You</strong></h6>
-                    <p>MESSAGE</p>
+                    <p class="mb-1">MESSAGE</p>
                     <span class="msg_time_send">8:55 AM, Today</span>
                 </div>
             </div>
