@@ -9,7 +9,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #d1d1d1;
+    background: rgba(0, 0, 0, 0.4);
     border-radius: 5px;
 }
 
@@ -42,7 +42,7 @@ a, a:hover {
 }
 
 .contacts_body {
-    padding: 0.75rem 0 !important;
+    padding: 0 !important;
     overflow-y: auto;
     white-space: nowrap;
 }
@@ -134,12 +134,15 @@ a, a:hover {
 
 .contacts li {
     width: 100% !important;
-    padding: 5px 10px;
-    margin-bottom: 15px !important;
+    padding: 10px;
 }
 
-.active {
-    background-color: rgba(0, 0, 0, 0.3);
+.contacts li:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.active, .active:hover {
+    background-color: rgba(0, 0, 0, 0.3) !important;
 }
 
 .user_img {
@@ -173,11 +176,7 @@ a, a:hover {
     border-radius: 50%;
     bottom: 0.1em;
     right: 0.2em;
-    border: 1px solid #f5f6fa;
-}
-
-.offline {
-    background-color: #c23616 !important;
+    border: 1px solid rgba(0, 0, 0, 0.3);
 }
 
 .user_info {
@@ -219,6 +218,7 @@ a, a:hover {
     padding: 10px;
     position: relative;
     min-width: 85px;
+    max-width: 500px;
 }
 
 .msg_cotainer:before {
@@ -245,6 +245,7 @@ a, a:hover {
     padding: 10px;
     position: relative;
     min-width: 85px;
+    max-width: 500px;
 }
 
 .msg_cotainer_send:after {
@@ -261,16 +262,7 @@ a, a:hover {
     border-radius: 0 3px;
 }
 
-.msg_time {
-    position: absolute;
-    bottom: 0;
-    color: rgba(255,255,255,0.5);
-    font-size: 10px;
-}
-
-.msg_time_send {
-    position: absolute;
-    bottom: 0;
+.msg_time, .msg_time_send {
     color: rgba(255,255,255,0.5);
     font-size: 10px;
 }
@@ -378,6 +370,55 @@ a, a:hover {
     background-color: rgba(0, 0, 0, 0.2);
     color: #f5f6fa;
     height: unset;
+}
+
+.not_seen_count_badge {
+    min-width: 1.6em;
+    height: 1.6em;
+    border-radius: 0.8em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 5px 1px 5px;
+    background-color: #4477CE;
+    color: #f5f6fa;
+    font-size: .8em;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+#messages-list {
+    position: relative;
+}
+
+#msg-scroll-down{
+    background-color: rgba(0, 0, 0, .4);
+    color: #f5f6fa;
+    padding: 7px 13px;
+    border-radius: 50%;
+    position: sticky;
+    bottom: 0;
+    width: 36px;
+    height: 36px;
+    left: 100%;
+    cursor: pointer;
+}
+
+#msg-not-seen-count-scroll-down {
+    position: absolute;
+    right: -0.7em;
+    top: -0.7em;
+    min-width: 1.6em;
+    height: 1.6em;
+    border-radius: 0.8em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8em;
+    padding: 0 5px 1px 5px;
+    background-color: #4477CE;
+    color: #f5f6fa;
 }
 
 @media (max-width: 576px) {

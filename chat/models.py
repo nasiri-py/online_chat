@@ -16,13 +16,42 @@ def unique_generator(length=10):
 
 
 class GroupChat(models.Model):
-    creator = models.ForeignKey(User, on_delete=models.CASCADE)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_chats')
+    member = models.ManyToManyField(User)
     title = models.CharField(max_length=150)
     unique_code = models.CharField(max_length=10, default=unique_generator, unique=True)
     created = models.DateTimeField(auto_now_add=True)
 
 
-class Member(models.Model):
+# class Member(models.Model):
+#     CATEGORY_CHOICES = (
+#         ('g', 'group'),
+#         ('r', 'room')
+#     )
+#     title = models.CharField(max_length=150)
+#     slug = models.CharField(max_length=150)
+#     user = models.ForeignKey(User, on_delete=models.CASCADE)
+#     category = models.CharField(max_length=1, choices=CATEGORY_CHOICES)
+#     created = models.DateTimeField(auto_now_add=True)
+#     updated = models.DateTimeField(auto_now=True)
+#
+#     class Meta:
+#         unique_together = [['slug', 'user', 'category']]
+#
+#     def __str__(self):
+#         return f'{self.user.username} - {self.slug} - {self.updated}'
+
+
+class Message(models.Model):
+    slug = models.CharField(max_length=150)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    text = models.TextField()
+    is_seen = models.BooleanField(default=False)
+    active = models.BooleanField(default=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+
+class Notification(models.Model):
     CATEGORY_CHOICES = (
         ('g', 'group'),
         ('r', 'room')
@@ -31,6 +60,8 @@ class Member(models.Model):
     slug = models.CharField(max_length=150)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     category = models.CharField(max_length=1, choices=CATEGORY_CHOICES)
+    last_text = models.TextField(null=True, blank=True)
+    not_seen_count = models.IntegerField(default=1)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -38,28 +69,7 @@ class Member(models.Model):
         unique_together = [['slug', 'user', 'category']]
 
     def __str__(self):
-        return f'{self.user.username} - {self.slug} - {self.updated}'
-
-
-class Message(models.Model):
-    slug = models.CharField(max_length=150)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    text = models.TextField()
-    active = models.BooleanField(default=True)
-    seen = models.BooleanField(default=False)
-    created = models.DateTimeField(auto_now_add=True)
-
-
-class Notif(models.Model):
-    CATEGORY_CHOICES = (
-        ('g', 'group'),
-        ('r', 'room')
-    )
-    slug = models.CharField(max_length=150)
-    category = models.CharField(max_length=1, choices=CATEGORY_CHOICES)
-    created = models.DateTimeField(auto_now_add=True)
-    last_text = models.TextField()
-    updated = models.DateTimeField(auto_now=True)
+        return f'{self.user.username} - {self.slug} - {self.not_seen_count}'
 
 
 class UserOnlineStatus(models.Model):

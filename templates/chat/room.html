@@ -82,11 +82,11 @@
                     </div>
                 </div>
                 <div class="card-body contacts_body">
-                    <ul class="contacts" id="members-list">
+                    <ul class="contacts" id="contacts">
                         {% for member in members %}
-                            <li class="{% if member.slug in request.path %}active{% endif %}">
+                            <li class="{% if member.slug in request.path %}active{% endif %}" id="{{ member.slug }}_contact{% if member.slug == user.username and member.user == user %}_SavedMessages{% endif %}">
                                 <a href="{% if member.category == 'g' %}{% url 'chat:group' member.slug %}{% else %}{% url 'chat:room' member.slug %}{% endif %}"
-                                   class="d-flex bd-highlight">
+                                   class="d-flex bd-highlight position-relative">
                                     <div class="img_cont">
                                         <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
                                              class="rounded-circle user_img">
@@ -105,8 +105,9 @@
                                                 Messages{% else %}
                                                 {{ member.title }}{% endif %}
                                         </span>
-                                        <p id="last-text">{% notif_filter member.slug user.username %}</p>
+                                        <p id="{{ member.slug }}">{% notif_filter member.slug member.user %}</p>
                                     </div>
+                                    <span id="{{ member.slug }}_not_seen_count_badge" class="not_seen_count_badge {% if member.not_seen_count == 0 %}d-none{% endif %}">{{ member.not_seen_count }}</span>
                                 </a>
                             </li>
                         {% endfor %}
@@ -202,22 +203,35 @@
                             <div class="media-body">
                                 {% if message.author == user %}
                                     <div class="d-flex justify-content-end mb-4">
-                                        <div class="msg_cotainer_send pb-3">
+                                        <div class="msg_cotainer_send">
                                             <p class="mb-1">{{ message.text }}</p>
-                                            <span class="msg_time_send">8:55 AM, Today</span>
+                                            <div class="d-flex justify-content-between align-items-baseline">
+                                                <span class="msg_time_send">{{ message.created }}</span>
+                                                <div class="msg-check-icon">
+                                                    {% if message.is_seen %}
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><path d="M11.602 13.7599L13.014 15.1719L21.4795 6.7063L22.8938 8.12051L13.014 18.0003L6.65 11.6363L8.06421 10.2221L10.189 12.3469L11.6025 13.7594L11.602 13.7599ZM11.6037 10.9322L16.5563 5.97949L17.9666 7.38977L13.014 12.3424L11.6037 10.9322ZM8.77698 16.5873L7.36396 18.0003L1 11.6363L2.41421 10.2221L3.82723 11.6352L3.82604 11.6363L8.77698 16.5873Z" fill="rgba(255,255,255,1)"></path></svg>
+                                                    {% else %}
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><path d="M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z" fill="rgba(255,255,255,1)"></path></svg>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 {% else %}
                                     <div class="d-flex justify-content-start mb-4">
                                         <div class="msg_cotainer pb-3">
                                             <p class="mb-1">{{ message.text }}</p>
-                                            <span class="msg_time">8:40 AM, Today</span>
+                                            <span class="msg_time">{{ message.created }}</span>
                                         </div>
                                     </div>
                                 {% endif %}
                             </div>
                         </div>
                     {% endfor %}
+                    <div id="msg-scroll-down" class="d-none">
+                        <i class="fas fa-angle-down"></i>
+                        <span id="msg-not-seen-count-scroll-down"></span>
+                    </div>
                 </div>
                 <div class="card-footer">
                     <div class="input-group">
@@ -259,13 +273,15 @@
             lasttesxt.text(message['text']);
             msgdiv.append(`
           <div class="d-flex justify-content-start mb-4">
-            <div class="msg_cotainer pb-3">
+            <div class="msg_cotainer">
                 <p class="mb-1">MESSAGE</p>
-                <span class="msg_time">8:40 AM, Today</span>
+                <span class="msg_time">TIME</span>
             </div>
           </div>
-        `.replace('MESSAGE', message['text']));
-            msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
+        `.replace('MESSAGE', message['text']).replace('TIME', message['time']));
+            if (msgdiv.prop("scrollHeight") - msgdiv.scrollTop() < msgdiv.height() * 2) {
+                msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
+            }
         };
     }
 
@@ -283,16 +299,22 @@
     document.querySelector('#msg-submit').onclick = function (e) {
         var messageInputDom = document.querySelector('#msg-input');
         var message = messageInputDom.value;
+        var time = new Date();
 
         lasttesxt.text(message);
         msgdiv.append(`
             <div class="d-flex justify-content-end mb-4">
-                <div class="msg_cotainer_send pb-3">
+                <div class="msg_cotainer_send">
                     <p class="mb-1">MESSAGE</p>
-                    <span class="msg_time_send">8:55 AM, Today</span>
+                    <div class="d-flex justify-content-between align-items-baseline">
+                        <span class="msg_time_send">TIME</span>
+                        <div class="msg-check-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><path d="M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z" fill="rgba(255,255,255,1)"></path></svg>
+                        </div>
+                    </div>
                 </div>
             </div>
-        `.replace('MESSAGE', message));
+        `.replace('MESSAGE', message).replace('TIME', time.toLocaleString([], { hour: 'numeric', minute: 'numeric' })));
 
         msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
 
@@ -301,8 +323,188 @@
         messageInputDom.value = '';
     };
 </script>
-<script>
+<script type='text/javascript'>
+
     const loggedin_user = {{ username_json }}
+
+    const notify_socket = new WebSocket(
+    'ws://'
+    + window.location.host
+    + '/ws/'
+    +'notify/'
+)
+
+notify_socket.onopen = function(e){
+    if (msgdiv.prop("scrollHeight") - msgdiv.scrollTop() < msgdiv.height() * 2) {
+            msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
+            notify_socket.send(JSON.stringify({
+                'username': loggedin_user,
+                'path': window.location.pathname
+            }))
+        }
+}
+
+
+notify_socket.onmessage = function(e){
+        const data = JSON.parse(e.data)
+        console.log(data.seen)
+        const msgCheckList = document.getElementsByClassName('msg-check-icon')
+        {#const msgCheck = msgCheckList.slice(-5)#}
+        if (data.seen === 'seen') {
+            console.log(msgCheckList[msgCheckList.length])
+            for(let i=0; i===msgCheck.length; i++){
+                console.log(msgCheck[i])
+                msgCheck[i].innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><path d="M11.602 13.7599L13.014 15.1719L21.4795 6.7063L22.8938 8.12051L13.014 18.0003L6.65 11.6363L8.06421 10.2221L10.189 12.3469L11.6025 13.7594L11.602 13.7599ZM11.6037 10.9322L16.5563 5.97949L17.9666 7.38977L13.014 12.3424L11.6037 10.9322ZM8.77698 16.5873L7.36396 18.0003L1 11.6363L2.41421 10.2221L3.82723 11.6352L3.82604 11.6363L8.77698 16.5873Z" fill="rgba(255,255,255,1)"></path></svg>`
+            }
+        }
+        const contacts = $('#contacts')
+        if (data.category === 'g') {
+            if (window.location.pathname.includes(data.slug)) {
+                var active = 'active'
+            } else {
+                var active = ''
+            }
+            $(`#${data.slug}_contact`).remove()
+            contacts.prepend(`
+                <li class="${active}" id="${data.slug}_contact">
+                    <a href="group/${data.slug}"
+                       class="d-flex bd-highlight position-relative">
+                        <div class="img_cont">
+                            <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
+                                 class="rounded-circle user_img">
+                        </div>
+                        <div class="user_info">
+                            <span>
+                                ${data.title}
+                            </span>
+                            <p id="${data.user}_last_text">${data.last_text}</p>
+                        </div>
+                        <span id="${data.user}_not_seen_count_badge" class="not_seen_count_badge">${data.not_seen_count}</span>
+                    </a>
+                </li>
+            `)
+        } else {
+            if (window.location.pathname.includes(data.user)) {
+                var active = 'active'
+            } else {
+                var active = ''
+            }
+            $(`#${data.user}_contact`).remove()
+            $(`#${data.slug}_contact`).remove()
+             if (data.user === data.slug) {
+                $(`#${data.user}_contact_SavedMessages`).remove()
+                contacts.prepend(`
+                   <li class="${active}" id="${data.slug}_contact_SavedMessages">
+                       <a href="room/${data.slug}"
+                          class="d-flex bd-highlight position-relative">
+                           <div class="img_cont">
+                               <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
+                                    class="rounded-circle user_img">
+                                       <span id="${data.slug}_status"></span>
+                           </div>
+                           <div class="user_info">
+                               <span>
+                                  Saved Messages
+                               </span>
+                               <p id="${data.user}_last_text">${data.last_text}</p>
+                           </div>
+                       </a>
+                   </li>
+              `)
+            } else if (data.slug === loggedin_user) {
+                 console.log(1)
+               contacts.prepend(`
+                   <li class="${active}" id="${data.user}_contact">
+                       <a href="room/${data.user}"
+                          class="d-flex bd-highlight position-relative">
+                           <div class="img_cont">
+                               <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
+                                    class="rounded-circle user_img">
+                                       <span id="${data.user}_status"></span>
+                           </div>
+                           <div class="user_info">
+                               <span>
+                                  ${data.user}
+                               </span>
+                               <p id="${data.user}_last_text">${data.last_text}</p>
+                           </div>
+                           <span id="${data.user}_not_seen_count_badge" class="not_seen_count_badge d-none">${data.not_seen_count}</span>
+                       </a>
+                   </li>
+              `)
+            } else if (data.user === loggedin_user) {
+                 console.log(2)
+                 if (window.location.pathname.includes(data.slug)) {
+                var active = 'active'
+            } else {
+                var active = ''
+            }
+               contacts.prepend(`
+                   <li class="${active}" id="${data.slug}_contact">
+                       <a href="room/${data.slug}"
+                          class="d-flex bd-highlight position-relative">
+                           <div class="img_cont">
+                               <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
+                                    class="rounded-circle user_img">
+                                       <span id="${data.slug}_status"></span>
+                           </div>
+                           <div class="user_info">
+                               <span>
+                                  ${data.slug}
+                               </span>
+                               <p id="${data.user}_last_text">${data.last_text}</p>
+                           </div>
+                            <span id="${data.user}_not_seen_count_badge" class="not_seen_count_badge">${data.not_seen_count}</span>
+                       </a>
+                   </li>
+              `)
+            }
+        }
+        if (data.user !== data.slug && window.location.pathname.includes(data.slug)) {
+            const msgScroll = $(`#msg-scroll-down`)
+            const msgNotif = $(`#${data.user}_not_seen_count_badge`)
+            if (msgdiv.prop("scrollHeight") - msgdiv.scrollTop() < msgdiv.height() * 2) {
+                msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
+                msgScroll.addClass('d-none')
+                msgNotif.addClass('d-none')
+                notify_socket.send(JSON.stringify({
+                    'username': loggedin_user,
+                    'path': window.location.pathname
+                }))
+
+            } else {
+                msgScroll.removeClass('d-none')
+                msgScroll.addClass('d-block')
+                $(`#msg-not-seen-count-scroll-down`).text(`${data.not_seen_count}`)
+                msgScroll.on('click', function (e){
+                    msgdiv.scrollTop(msgdiv.prop("scrollHeight"))
+                    msgScroll.addClass('d-none')
+                    msgNotif.addClass('d-none')
+                        notify_socket.send(JSON.stringify({
+                            'username': loggedin_user,
+                            'path': window.location.pathname
+                        }))
+
+                })
+                msgdiv.on('scroll', function (e){
+                    if (msgdiv.prop("scrollHeight") - msgdiv.scrollTop() < msgdiv.height() * 2) {
+                        msgScroll.addClass('d-none')
+                        msgNotif.addClass('d-none')
+                        notify_socket.send(JSON.stringify({
+                            'username': loggedin_user,
+                            'path': window.location.pathname
+                        }))
+                    }
+                })
+            }
+        }
+}
+
+notify_socket.onclose = function(e){
+    console.log("DISCONNECTED FROM NOTIFICATION");
+}
+
+
     const online_status = new WebSocket(
         'ws://'
         + window.location.host
@@ -330,15 +532,15 @@
 
     online_status.onmessage = function (e) {
         var data = JSON.parse(e.data)
-        if (data.username != loggedin_user) {
+        if (data.username !== loggedin_user) {
             const user_to_change = $(`#${data.username}_status`)
-            const small_status_to_change = $(`#${data.username}_small`)
-            if (data.online_status == true) {
+            const user_to_change_small = $(`#${data.username}_small`)
+            if (data.online_status === true) {
                 user_to_change.addClass('online_icon');
-                small_status_to_change.html('online');
+                user_to_change_small.text('online');
             } else {
                 user_to_change.removeClass('online_icon');
-                small_status_to_change.html('offline');
+                user_to_change_small.text('offline');
             }
         }
     }

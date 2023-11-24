@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 import json
 from datetime import datetime
 
-from .models import GroupChat, Message, Member, Notif, UserOnlineStatus
+from .models import GroupChat, Message, Notification, UserOnlineStatus
 
 User = get_user_model()
 
@@ -46,7 +46,6 @@ class GroupConsumer(AsyncConsumer):
             text = text_data_json['text']
 
             await self.create_message(text)
-            await self.update_member()
 
             await self.channel_layer.group_send(
                 self.group_name,
@@ -84,22 +83,14 @@ class GroupConsumer(AsyncConsumer):
 
     @database_sync_to_async
     def create_message(self, text):
-        try:
-            notif = Notif.objects.get(slug=self.chat_id, category='g')
-        except Notif.DoesNotExist:
-            notif = Notif.objects.create(slug=self.chat_id, category='g')
-        notif.last_text = text
-        notif.save()
+        members = self.chat.member.all()
+        for member in members:
+            if member.username != self.user.username:
+                notif = Notification.objects.get(user__username=member.username, slug=self.chat_id, category='g')
+                notif.last_text = text
+                notif.not_seen_count += 1
+                notif.save()
         Message.objects.create(slug=self.chat_id, author_id=self.user.id, text=text)
-
-    @database_sync_to_async
-    def update_member(self):
-        try:
-            member = Member.objects.get(slug=self.chat_id, user=self.user, category='g')
-            member.updated = datetime.now()
-            member.save()
-        except Member.DoesNotExist:
-            Member.objects.create(title=self.chat_id, slug=self.chat_id, user=self.user, category='g')
 
 
 class RoomConsumer(AsyncConsumer):
@@ -137,13 +128,12 @@ class RoomConsumer(AsyncConsumer):
             text = text_data_json['text']
 
             await self.create_message(text)
-            await self.update_member()
 
             await self.channel_layer.group_send(
                 user_room_name,
                 {
                     'type': 'chat_message',
-                    'message': text_data
+                    'message': json.dumps({'text': text, 'time': str(datetime.today().strftime("%H:%M %p"))})
                 }
             )
 
@@ -174,24 +164,14 @@ class RoomConsumer(AsyncConsumer):
     @database_sync_to_async
     def create_message(self, text):
         try:
-            notif = Notif.objects.get(slug=self.contact, category='r')
-        except Notif.DoesNotExist:
-            notif = Notif.objects.create(slug=self.contact, category='r')
-        notif.last_text = text
-        notif.save()
+            notif = Notification.objects.get(user__username=self.contact, slug=self.user, category='r')
+            notif.last_text = text
+            notif.not_seen_count += 1
+            notif.save()
+        except Notification.DoesNotExist:
+            contact = User.objects.get(username=self.contact)
+            Notification.objects.create(title=self.user.username, user=contact, slug=self.user, category='r', last_text=text)
         Message.objects.create(slug=self.contact, author_id=self.user.id, text=text)
-
-    @database_sync_to_async
-    def update_member(self):
-        try:
-            member1 = Member.objects.get(slug=self.contact, user=self.user, category='r')
-            member2 = Member.objects.get(slug=self.user.username, user__username=self.contact, category='r')
-            member1.updated = datetime.now()
-            member2.updated = datetime.now()
-            member1.save()
-            member2.save()
-        except Member.DoesNotExist:
-            Member.objects.create(title=self.contact, slug=self.contact, user=self.user, category='r')
 
 
 class UserOnlineStatusConsumer(AsyncWebsocketConsumer):
@@ -218,10 +198,7 @@ class UserOnlineStatusConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def change_online_status(self, username, c_type):
-        try:
-            user_online_status = UserOnlineStatus.objects.get(user__username=username)
-        except UserOnlineStatus.DoesNotExist:
-            user_online_status = UserOnlineStatus.objects.create(user__username=username)
+        user_online_status = UserOnlineStatus.objects.get(user__username=username)
         if c_type == 'open':
             user_online_status.online_status = True
             user_online_status.save()
@@ -236,4 +213,80 @@ class UserOnlineStatusConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'username': username,
             'online_status': online_status
+        }))
+
+
+class NotificationConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        my_username = self.scope['user']
+        self.room_group_name = f'{my_username}'
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+
+        await self.accept()
+
+    async def disconnect(self, code):
+        self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
+
+    async def receive(self, text_data=None, bytes_data=None):
+        if text_data:
+            text_data_json = json.loads(text_data)
+            username = text_data_json['username']
+            path = text_data_json['path']
+            await self.change_notification_to_seen(username, path)
+
+    async def send_notification(self, event):
+        data = json.loads(event.get('value'))
+        if data == 'seen':
+            await self.send(text_data=json.dumps({
+                'seen': data,
+            }))
+        else:
+            user = data['user']
+            not_seen_count = data['not_seen_count']
+            last_text = data['last_text']
+            category = data['category']
+            slug = data['slug']
+            title = data['title']
+            await self.send(text_data=json.dumps({
+                'user': user,
+                'not_seen_count': not_seen_count,
+                'last_text': last_text,
+                'category': category,
+                'slug': slug,
+                'title': title
+            }))
+
+    @database_sync_to_async
+    def change_notification_to_seen(self, username, path):
+        if 'group' in path:
+            slug = path[7:-1]
+            category = 'g'
+        else:
+            slug = path[6:-1]
+            category = 'r'
+        notification = Notification.objects.get(user__username=username, slug=slug, category=category)
+        notification.not_seen_count = 0
+        notification.save()
+        messages = Message.objects.filter(author__username=username, slug=slug)
+        for message in messages:
+            message.is_seen = True
+            message.save()
+        self.channel_layer.group_send(
+            username, {
+                'type': 'send_notification_to_seen',
+                'seen': 'true'
+            }
+        )
+
+    async def send_notification_to_seen(self, event):
+        seen = json.loads(event.get('seen'))
+        print(seen)
+        await self.send(text_data=json.dumps({
+            'seen': seen
         }))
