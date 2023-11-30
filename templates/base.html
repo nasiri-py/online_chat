@@ -1,0 +1,557 @@
+{% load static %}
+
+{% load base_tags %}
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+          integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
+          integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css">
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'chat/css/style.css' %}">
+    <title>Document</title>
+</head>
+<body>
+
+<div class="container-fluid h-100">
+    <div class="row justify-content-center h-100">
+        <div class="col-md-3 col-xl-3 chat">
+            <div class="offcanvas offcanvas-start position-absolute bg-dark w-50" tabindex="-1"
+                 id="MenuoffcanvasExample"
+                 aria-labelledby="MenuoffcanvasExampleLabel">
+                <div class="offcanvas-header">
+                    <a href="{% url 'accounts:profile' %}" class="d-flex bd-highlight">
+                        <div class="img_cont">
+                            <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
+                                 class="rounded-circle user_img">
+                        </div>
+                        <div class="user_info">
+                            <span>{{ user.username }}</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="offcanvas-body px-0">
+                    <ul>
+                        <li>
+                            <a class="d-flex align-items-baseline" type="button" data-toggle="modal"
+                               data-target="#NewRoomModalCenter">
+                                <i class="fas fa-user"></i>
+                                New Room
+                            </a>
+                        </li>
+                        <li>
+                            <a class="d-flex align-items-baseline" type="button" data-toggle="modal"
+                               data-target="#NewGroupModalCenter">
+                                <i class="fas fa-users"></i>
+                                New Group
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card mb-sm-3 mb-md-0 contacts_card">
+                <div class="card-header">
+                    <div class="input-group">
+                        <a class="me-3 my-auto" data-bs-toggle="offcanvas" href="#MenuoffcanvasExample" role="button"
+                           aria-controls="MenuoffcanvasExample">
+                            <i class="fas fa-bars menu-icon"></i>
+                        </a>
+                        <input id="username-input" type="text" class="form-control search" placeholder="Search..."
+                               aria-label="Receiver ID" aria-describedby="addon-wrapping">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text search_btn"><i class="fas fa-search"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body contacts_body">
+                    <ul class="contacts" id="contacts">
+                        {% for member in members %}
+                            <li class="{% if member.slug in request.path %}active{% endif %}" id="{{ member.slug }}_contact{% if member.slug == user.username and member.user == user %}_SavedMessages{% endif %}">
+                                <a href="{% if member.category == 'g' %}{% url 'chat:group' member.slug %}{% else %}{% url 'chat:room' member.slug %}{% endif %}"
+                                   class="d-flex bd-highlight position-relative">
+                                    <div class="img_cont">
+                                        <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
+                                             class="rounded-circle user_img">
+                                        {% if member.category == 'r' %}
+                                            {% online_status member.slug as online %}
+                                            {% if online %}
+                                                <span id="{{ member.slug }}_status" class="online_icon"></span>
+                                            {% else %}
+                                                <span id="{{ member.slug }}_status" class=""></span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                    <div class="user_info">
+                                        <span class="mb-1">
+                                            {% if member.slug == user.username and member.user == user %}Saved
+                                                Messages{% else %}
+                                                {% if member.category == 'r' %}
+                                                    {{ member.slug }}
+                                                {% else %}
+                                                    {{ member.title }}
+                                                {% endif %}
+                                            {% endif %}
+                                        </span>
+                                        <p class="mt-1" id="{{ member.user }}_{{ member.slug }}_last_text">
+                                            {% notif_filter member.user member.slug member.category %}
+                                        </p>
+                                    </div>
+                                    <span id="{{ member.user }}_{{ member.slug }}_not_seen_count_badge" class="not_seen_count_badge {% if member.not_seen_count == 0 %}d-none{% endif %}">{{ member.not_seen_count }}</span>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- New Room Modal -->
+        <div class="modal fade" id="NewRoomModalCenter" tabindex="-1" role="dialog"
+             aria-labelledby="NewRoomModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content add-chat-modal bg-dark">
+                    <div class="modal-body">
+                        <p>Modal body text goes here.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- New Group Modal -->
+        <div class="modal fade" id="NewGroupModalCenter" tabindex="-1" role="dialog"
+             aria-labelledby="NewGroupModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content add-chat-modal bg-dark">
+                    <div class="modal-body">
+                        <form action="{% url 'chat:create_group' %}" method="POST">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="id_group_name">Group Name</label>
+                                <input type="text" class="form-control new-chat-form" name="group_name"
+                                       id="id_group_name">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% block content %}
+        
+        {% endblock %}
+    </div>
+</div>
+
+
+<div class="container">
+   <div class="row d-none" id="videocall_section">
+        <div class="col-12 col-lg-6 card-video">
+                    <video class="call-emitter" id="video-emitter" autoplay></video>
+        </div>
+        <div class="col-12 col-lg-6 card-video">
+                    <video class="call-receiver" id="video-receiver" autoplay></video>
+        </div>
+    </div>
+    <div id="videocall_status" class="d-none" style="background-image: url('https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg')">
+        <div id="call-status" class="text-center font-weight-bold"></div>
+        <div class="d-flex justify-content-around">
+            <span id="mute-video" class="btn"><i class="fas fa-microphone"></i></span>
+            <span id="disable-video" class="btn"><i class="fas fa-video"></i></span>
+            <button id="btnHangup" type="button" class="btn btn-danger d-none"><i class="fas fa-phone phone-hangup"></i></button>
+            <button id="btnCancel" type="button" class="btn btn-danger"><i class="fas fa-phone phone-hangup"></i></button>
+        </div>
+    </div>
+    <div id="call-request-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModal2"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body"></div>
+                <div class="modal-footer">
+                    <button id="btnDeclineOffer" type="button" class="btn btn-danger"><i class="fas fa-phone phone-hangup"></i></button>
+                    <button id="btnAcceptOffer" type="button" class="btn btn-success"><i class="fas fa-phone phone-answer"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="offer-status-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModal3"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+{#<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>#}
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.js"></script>
+
+{% block script %}
+    
+{% endblock %}
+
+<script>
+    const configuration = {
+        iceServers: [
+            {
+                urls: 'stun:stun.l.google.com:19302' // Google's public STUN server
+            }
+        ]
+    };
+
+    const videocall_socket = new WebSocket(
+        'ws://' + window.location.host +
+        '/ws/videocall/');
+
+
+    let pc;
+    var isOfferer = false;
+    var video_thread_id = 0;
+    const VC_CONTACTING = 0, VC_NOT_AVAILABLE = 1, VC_ACCEPTED = 2,
+        VC_REJECTED = 3, VC_BUSY = 4, VC_PROCESSING = 5, VC_ENDED = 6, VC_CANCEL = 7;
+
+    var localVideo = document.querySelector('#video-emitter');
+    var remoteVideo = document.querySelector('#video-receiver');
+    var muteVideo = document.getElementById('mute-video');
+    var disableVideo = document.getElementById('disable-video');
+    var CallTimeOutId = 0;
+    var CallTimerId = 0;
+
+
+    videocall_socket.onmessage = function (e) {
+        var message = JSON.parse(e.data);
+        switch (message.type) {
+            case 'offerResult':
+                status = message.status;
+
+                switch (parseInt(status)) {
+                    case 404:
+                        $("#offer-status-modal").modal('show').find('.modal-body').text("User is not found.");
+                        enableCallViews();
+                        break;
+                    case VC_CONTACTING:
+                        $('#videocall_status').removeClass("d-none");
+                        video_thread_id = message.video_thread_id;
+                        if (message.callee_online_status === 'True') {
+                            document.querySelector('#call-status').innerHTML = "Ringing...";
+                        } else {
+                            document.querySelector('#call-status').innerHTML = "Calling...";
+                        }
+                        CallTimeOutId = setInterval(() => {
+                            sendMessage({'type': 'cancelOffer'})
+                            clearInterval(CallTimeOutId);
+                        }, 25000);
+                        break;
+                    case VC_NOT_AVAILABLE:
+                        clearInterval(CallTimeOutId);
+                        enableCallViews();
+                        $("#offer-status-modal").modal('show').find('.modal-body').text("User is not available.");
+                        break;
+                    case VC_ACCEPTED:
+                        clearInterval(CallTimeOutId);
+                        $('#btnCancel').addClass("d-none");
+                        $('#videocall_status').addClass('video_calling')
+                        document.querySelector('#call-status').innerHTML = "Waiting...";
+                        $('#videocall_section').removeClass('d-none')
+                        isOfferer = true;
+                        startWebRTC()
+                        break;
+                    case VC_REJECTED:
+                        clearInterval(CallTimeOutId);
+                        enableCallViews();
+                        $("#offer-status-modal").modal('show').find('.modal-body').text("User rejected your call request.");
+                        break;
+                    case VC_BUSY:
+                        enableCallViews();
+                        $("#offer-status-modal").modal('show').find('.modal-body').text("User is busy.");
+                        break;
+                    case VC_ENDED:
+                        $('#btnCall').removeClass("d-none");
+                        $('#btnHangup').addClass("d-none");
+                        $('#videocall_section').addClass('d-none')
+                        $('#videocall_status').removeClass('video_calling')
+                        enableCallViews();
+                        pc.close();
+                        pc = null;
+
+                        localVideo.srcObject.getTracks().forEach(track => track.stop())
+                        localVideo.srcObject = null;
+                        remoteVideo.srcObject.getTracks().forEach(track => track.stop())
+                        remoteVideo.srcObject = null;
+
+                        clearInterval(CallTimerId);
+                        {#$("#offer-status-modal").modal('show').find('.modal-body').text("Video Call was finished.");#}
+                        break;
+                    case VC_CANCEL:
+                        $('#btnCall').removeClass("d-none");
+                        $('#btnHangup').addClass("d-none");
+                        $('#videocall_section').addClass('d-none')
+                        $('#videocall_status').removeClass('video_calling')
+                        break;
+                    default:
+                        break;
+                }
+
+                break;
+
+            case 'offer':
+                disableCallViews();
+                $('#id_username').val(message.username);
+                video_thread_id = message.video_thread_id
+                $("#call-request-modal").modal('show').find('.modal-body').text(message.username + " is calling");
+                break;
+            case 'offerFinished':
+                video_thread_id = 0;
+                enableCallViews();
+                $('#videocall_status').removeClass('video_calling')
+                $("#call-request-modal").modal('hide');
+                break;
+            case 'callerData':
+                $('#videocall_status').removeClass("d-none");
+                $('#btnCancel').addClass("d-none");
+                $('#btnHangup').removeClass("d-none");
+                $('#videocall_status').addClass('video_calling')
+                document.querySelector('#call-status').innerHTML = "Connected";
+                handleRTCMessage(message)
+                break;
+            case 'calleeData':
+                $('#videocall_status').removeClass("d-none");
+                $('#btnCancel').addClass("d-none");
+                $('#btnHangup').removeClass("d-none");
+                $('#btnCall').addClass("d-none");
+                document.querySelector('#call-status').innerHTML = "Connected";
+                handleRTCMessage(message)
+                break;
+            default:
+                break;
+        }
+
+    };
+
+    videocall_socket.onclose = function (e) {
+        clearInterval(CallTimerId);
+        console.error('Socket closed unexpectedly');
+    };
+
+
+    function onSuccess() {
+    };
+
+    function onError(error) {
+        console.error(error);
+    };
+
+    function disableCallViews() {
+        $('#btnCall').addClass("disabled");
+        $('#id_username').attr('readonly', true);
+    }
+
+    function enableCallViews() {
+        $('#btnCall').removeClass("disabled");
+        $('#videocall_status').addClass("d-none");
+        $('#id_username').removeAttr('readonly');
+        $('#call-status').html("");
+    }
+
+    function get_elapsed_time_string(total_seconds) {
+        function pretty_time_string(num) {
+            return (num < 10 ? "0" : "") + num;
+        }
+
+        var hours = Math.floor(total_seconds / 3600);
+        total_seconds = total_seconds % 3600;
+
+        var minutes = Math.floor(total_seconds / 60);
+        total_seconds = total_seconds % 60;
+
+        var seconds = Math.floor(total_seconds);
+
+        // Pad the minutes and seconds with leading zeros, if required
+        hours = pretty_time_string(hours);
+        minutes = pretty_time_string(minutes);
+        seconds = pretty_time_string(seconds);
+
+        // Compose the string for display
+        var currentTimeString = hours + ":" + minutes + ":" + seconds;
+
+        return currentTimeString;
+    }
+
+    function sendMessage(message) {
+        message['video_thread_id'] = video_thread_id;
+        videocall_socket.send(JSON.stringify(message));
+    }
+
+    function sendRTCMessage(message) {
+        message['type'] = isOfferer ? "callerData" : "calleeData";
+        message['video_thread_id'] = video_thread_id;
+        videocall_socket.send(JSON.stringify(message));
+    }
+
+    function startWebRTC() {
+        pc = new RTCPeerConnection(configuration);
+
+        // 'onicecandidate' notifies us whenever an ICE agent needs to deliver a
+        // message to the other peer through the signaling server
+        pc.onicecandidate = event => {
+            if (event.candidate) {
+                sendRTCMessage({'candidate': event.candidate});
+            }
+        };
+
+        // If user is offerer let the 'negotiationneeded' event create the offer
+        if (isOfferer) {
+            pc.onnegotiationneeded = () => {
+                pc.createOffer().then(localDescCreated).catch(onError);
+            }
+        }
+
+        // When a remote stream arrives display it in the #remoteVideo element
+        pc.onaddstream = event => {
+            remoteVideo.srcObject = event.stream;
+            var elapsed_seconds = 0;
+            CallTimerId = setInterval(function () {
+                elapsed_seconds = elapsed_seconds + 1;
+                $('#call-status').html(get_elapsed_time_string(elapsed_seconds));
+            }, 1000);
+        };
+
+        navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: true,
+        }).then(stream => {
+            // Display your local video in #localVideo element
+            localVideo.srcObject = stream;
+            // Add your stream to be sent to the connecting peer
+            pc.addStream(stream);
+        }, onError);
+    }
+
+
+   muteVideo.addEventListener('click', function (e) {
+        localVideo.srcObject.getTracks().forEach((track) => {
+            if (track.readyState == 'live' && track.kind === 'audio'){
+                if (track.enabled === true) {
+                    track.enabled = false;
+                    this.innerHTML = `<i class="fas fa-microphone-slash"></i>`;
+                }
+                else {
+                    track.enabled = true;
+                    this.innerHTML = `<i class="fas fa-microphone"></i>`;
+                }
+            }
+    })});
+
+    disableVideo.addEventListener('click', function (e) {
+        localVideo.srcObject.getTracks().forEach((track) => {
+            if (track.readyState == 'live' && track.kind === 'video'){
+                if (track.enabled === true) {
+                    track.enabled = false;
+                    this.innerHTML = `<i class="fas fa-video-slash"></i>`;
+                }
+                else {
+                    track.enabled = true;
+                    this.innerHTML = `<i class="fas fa-video"></i>`;
+                }
+            }
+    })});
+
+    function handleRTCMessage(message) {
+        if (message.sdp) {
+            // This is called after receiving an offer or answer from another peer
+            pc.setRemoteDescription(new RTCSessionDescription(message.sdp), () => {
+                // When receiving an offer lets answer it
+                if (pc.remoteDescription.type === 'offer') {
+                    pc.createAnswer().then(localDescCreated).catch(onError);
+                }
+            }, onError);
+        } else if (message.candidate) {
+            // Add the new ICE candidate to our connections remote description
+            pc.addIceCandidate(
+                new RTCIceCandidate(message.candidate), onSuccess, onError
+            );
+        }
+    };
+
+    function localDescCreated(desc) {
+        pc.setLocalDescription(
+            desc,
+            () => sendRTCMessage({'sdp': pc.localDescription}),
+            onError
+        );
+    }
+
+
+    if (document.getElementById('btnVideoCall') !== null) {
+        document.querySelector('#btnVideoCall').onclick = function (e) {
+            var username = this.ariaValueText
+            document.querySelector('#call-status').innerHTML = "Looking for user...";
+            disableCallViews();
+            sendMessage({'type': "createOffer", 'username': username})
+        }
+    }
+
+    document.querySelector('#btnCancel').onclick = function (e) {
+        sendMessage({'type': "cancel"})
+        $('#videocall_section').addClass('d-none')
+    };
+
+    document.querySelector('#btnHangup').onclick = function (e) {
+        sendMessage({'type': "hangUp"})
+        $('#videocall_section').addClass('d-none')
+    };
+
+    document.querySelector('#btnAcceptOffer').onclick = function (e) {
+        $('#videocall_section').removeClass('d-none')
+        $('#btnHangup').removeClass('d-none')
+        $('#btnCancel').addClass('d-none')
+        $('#call-request-modal').modal('hide');
+        sendMessage({'type': "acceptOffer"})
+        isOfferer = false;
+        startWebRTC()
+    };
+
+    document.querySelector('#btnDeclineOffer').onclick = function (e) {
+        $('#call-request-modal').modal('hide');
+        enableCallViews();
+        sendMessage({'type': "rejectOffer"})
+    };
+</script>
+
+</body>
+</html>

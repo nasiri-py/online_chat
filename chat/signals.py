@@ -1,7 +1,7 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
-from .models import UserOnlineStatus, Notification, GroupChat
+from .models import UserOnlineStatus, Notification, GroupChat, Message
 import json
 
 from channels.layers import get_channel_layer
@@ -37,45 +37,37 @@ def send_online_status(sender, instance, created, **kwargs):
 @receiver(post_save, sender=Notification)
 def send_notification(sender, instance, created, **kwargs):
     channel_layer = get_channel_layer()
+    notification = Notification.objects.get(user_id=instance.user, slug=instance.slug)
+
     user = str(instance.slug)
-    if instance.not_seen_count != 0:
-        notification = Notification.objects.get(user_id=instance.user, slug=instance.slug)
+    data = {
+        'user': notification.user.username,
+        'not_seen_count': notification.not_seen_count,
+        'last_text': notification.last_text,
+        'category': notification.category,
+        'slug': notification.slug,
+        'title': notification.title,
+    }
 
-        data = {
-            'user': notification.user.username,
-            'not_seen_count': notification.not_seen_count,
-            'last_text': notification.last_text,
-            'category': notification.category,
-            'slug': notification.slug,
-            'title': notification.title,
-        }
-
-        if notification.category == 'g':
-            chat = GroupChat.objects.get(unique_code=notification.slug)
-            for user in chat.member.all():
-                async_to_sync(channel_layer.group_send)(
-                    user.username, {
-                        'type': 'send_notification',
-                        'value': json.dumps(data)
-                    }
-                )
-        else:
+    if notification.category == 'g':
+        chat = GroupChat.objects.get(unique_code=notification.slug)
+        for user in chat.member.all():
             async_to_sync(channel_layer.group_send)(
-                user, {
-                    'type': 'send_notification',
-                    'value': json.dumps(data)
-                }
-            )
-            async_to_sync(channel_layer.group_send)(
-                instance.user.username, {
+                user.username, {
                     'type': 'send_notification',
                     'value': json.dumps(data)
                 }
             )
     else:
+        # async_to_sync(channel_layer.group_send)(
+        #     user, {
+        #         'type': 'send_notification',
+        #         'value': json.dumps(data)
+        #     }
+        # )
         async_to_sync(channel_layer.group_send)(
-            user, {
+            instance.user.username, {
                 'type': 'send_notification',
-                'value': json.dumps('seen')
+                'value': json.dumps(data)
             }
         )

@@ -36,21 +36,32 @@ def group(request, chat_id):
     current_user = request.user
     chat = get_object_or_404(GroupChat, unique_code=chat_id)
     messages = Message.objects.filter(slug=chat_id).order_by('created')
-    member = Notification.objects.filter(slug=chat.unique_code, user_id=current_user.id, category='g')
+    member = Notification.objects.filter(slug=chat.unique_code, user_id=current_user.id, category='g').order_by('-updated')
+    try:
+        page_position = Notification.objects.get(user=current_user, slug=chat_id).position
+    except Notification.DoesNotExist:
+        page_position = ''
+
+    context = {
+        'chatObject': chat, 'messages': messages,
+        'members': Notification.objects.filter(user_id=request.user.id).order_by('-updated'),
+        'notifications': Notification.objects.filter((Q(slug=chat.unique_code) | Q(user=current_user))),
+        'chat_id_json': mark_safe(json.dumps(chat.unique_code)),
+        'username_json': mark_safe(json.dumps(current_user.username)),
+        'page_position': mark_safe(json.dumps(page_position))
+    }
 
     if request.method == "GET":
         if member.exists():
-            return render(request, 'chat/group.html',
-                          {'chatObject': chat, 'messages': messages, 'chat_id_json': mark_safe(json.dumps(chat.unique_code)),
-                           'members': Notification.objects.filter(user_id=request.user.id).order_by('-updated'), 'notifications': Notification.objects.filter((Q(slug=chat.unique_code) | Q(user=request.user))), 'username_json': mark_safe(json.dumps(request.user.username))})
+            return render(request, 'chat/group.html', context)
         return render(request, 'chat/join_group.html', {'chatObject': chat})
 
     elif request.method == "POST":
         if member.exists():
-            return render(request, 'chat/group.html',
-                          {'chatObject': chat, 'messages': messages, 'chat_id_json': mark_safe(json.dumps(chat.unique_code)),
-                           'members': Notification.objects.filter(user_id=request.user.id).order_by('-updated'), 'notifications': Notification.objects.filter((Q(slug=chat.unique_code) | Q(user=request.user))), 'username_json': mark_safe(json.dumps(request.user.username))})
+            return redirect('chat:group')
         Notification.objects.create(title=chat.title, slug=chat.unique_code, user_id=current_user.id, category='g')
+        chat.member.add(current_user)
+        chat.save()
 
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
@@ -61,8 +72,7 @@ def group(request, chat_id):
             }
         )
 
-        return render(request, 'chat/group.html',
-                      {'chatObject': chat, 'messages': messages, 'chat_id_json': mark_safe(json.dumps(chat.unique_code)), 'members': Notification.objects.filter(user_id=request.user.id).order_by('-updated'), 'notifications': Notification.objects.filter((Q(slug=chat.unique_code) | Q(user=request.user))), 'username_json': mark_safe(json.dumps(request.user.username))})
+        return render(request, 'chat/group.html', context)
 
 
 @login_required
@@ -99,11 +109,17 @@ def leave_group(request, chat_id):
 
 @login_required
 def room(request, username):
+    current_user = request.user
     contact = get_object_or_404(User, username=username)
-    Notification.objects.get_or_create(title=username, slug=username, user_id=request.user.id, category='r')
-    messages = Message.objects.filter((Q(slug=contact.username) & Q(author=request.user)) | (Q(slug=request.user.username) & Q(author=contact)), active=True).order_by('created')
-    members = Notification.objects.filter(user_id=request.user.id).order_by('-updated')
-    notifications = Notification.objects.filter((Q(slug=request.user.username) | Q(user=request.user)))
+    messages = Message.objects.filter((Q(slug=contact.username) & Q(author=current_user)) | (Q(slug=current_user.username) & Q(author=contact)), active=True).order_by('created')
+    members = Notification.objects.filter(user_id=current_user.id).order_by('-updated')
+    notifications = Notification.objects.filter((Q(slug=current_user.username) | Q(user=current_user)))
+    try:
+        page_position = Notification.objects.get(user=current_user, slug=contact.username).position
+    except Notification.DoesNotExist:
+        page_position = ''
     return render(request, 'chat/room.html', {'contact': contact, 'messages': messages, 'members': members, 'notification': notifications,
                                               'contact_json': mark_safe(json.dumps(contact.username)),
-                                              'user_json': mark_safe(json.dumps(request.user.username)), 'username_json': mark_safe(json.dumps(request.user.username))})
+                                              'user_json': mark_safe(json.dumps(current_user.username)),
+                                              'username_json': mark_safe(json.dumps(current_user.username)),
+                                              'page_position': mark_safe(json.dumps(page_position))})

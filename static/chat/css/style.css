@@ -13,6 +13,22 @@
     border-radius: 5px;
 }
 
+::-webkit-input-placeholder {
+    color: #f5f6fa !important;
+    opacity: .5 !important;
+}
+
+::-webkit-input-placeholder {
+    color: #f5f6fa !important;
+    opacity: .5 !important;
+}
+
+:-ms-input-placeholder {
+    color: #f5f6fa !important;
+    opacity: .5 !important;
+}
+
+
 body, html {
     height: 100%;
     margin: 0;
@@ -48,7 +64,8 @@ a, a:hover {
 }
 
 .msg_card_body {
-    overflow-y: auto;
+    overflow-y: scroll;
+    max-height: 319px;
 }
 
 .card-header {
@@ -135,6 +152,7 @@ a, a:hover {
 .contacts li {
     width: 100% !important;
     padding: 10px;
+    height: 78px;
 }
 
 .contacts li:hover {
@@ -196,12 +214,12 @@ a, a:hover {
     color: rgba(255, 255, 255, 0.6);
 }
 
-.video_cam {
+.call {
     margin-left: 50px;
     margin-top: 5px;
 }
 
-.video_cam span {
+.call a, .call span {
     color: #f5f6fa;
     font-size: 20px;
     cursor: pointer;
@@ -263,7 +281,7 @@ a, a:hover {
 }
 
 .msg_time, .msg_time_send {
-    color: rgba(255,255,255,0.5);
+    color: rgba(255, 255, 255, 0.5);
     font-size: 10px;
 }
 
@@ -392,7 +410,7 @@ a, a:hover {
     position: relative;
 }
 
-#msg-scroll-down{
+#msg-scroll-down {
     background-color: rgba(0, 0, 0, .4);
     color: #f5f6fa;
     padding: 7px 13px;
@@ -418,6 +436,68 @@ a, a:hover {
     font-size: 0.8em;
     padding: 0 5px 1px 5px;
     background-color: #4477CE;
+    color: #f5f6fa;
+}
+
+#videocall_section {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 85%;
+}
+
+
+#videocall_section .card-video {
+    flex-basis: 500px;
+    flex-grow: 1;
+    border-radius: 15px;
+    margin: 2px;
+    position: relative;
+    padding: unset;
+}
+
+.call-receiver, .call-emitter {
+    width: 100%;
+    height: 100%;
+    border-radius: 15px;
+}
+
+.phone-hangup {
+    transform: rotate(225deg);
+}
+
+#videocall_status {
+    min-width: 250px;
+    min-height: 250px;
+    width: 500px;
+    height: 500px;
+    border-radius: 7px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 1055;
+    transform: translate(-50%, -50%);
+    color: #f5f6fa;
+    padding: 1.2rem;
+    background-repeat: no-repeat;
+    background-size: contain, cover;
+    display: flex;
+    flex-flow: column;
+    justify-content: space-between;
+}
+
+.video_calling {
+    background: unset !important;
+    top: 85% !important;
+    height: unset !important;
+    min-height: unset !important;
+    flex-flow: row !important;
+}
+
+#videocall_status span {
+    backdrop-filter: blur(10px);
     color: #f5f6fa;
 }
 

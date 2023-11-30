@@ -1,6 +1,7 @@
 from django.db import models
 import random
 import string
+from datetime import datetime
 
 from django.contrib.auth import get_user_model
 
@@ -23,28 +24,10 @@ class GroupChat(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
 
-# class Member(models.Model):
-#     CATEGORY_CHOICES = (
-#         ('g', 'group'),
-#         ('r', 'room')
-#     )
-#     title = models.CharField(max_length=150)
-#     slug = models.CharField(max_length=150)
-#     user = models.ForeignKey(User, on_delete=models.CASCADE)
-#     category = models.CharField(max_length=1, choices=CATEGORY_CHOICES)
-#     created = models.DateTimeField(auto_now_add=True)
-#     updated = models.DateTimeField(auto_now=True)
-#
-#     class Meta:
-#         unique_together = [['slug', 'user', 'category']]
-#
-#     def __str__(self):
-#         return f'{self.user.username} - {self.slug} - {self.updated}'
-
-
 class Message(models.Model):
     slug = models.CharField(max_length=150)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='messages')
+    member_not_seen = models.ManyToManyField(User)
     text = models.TextField()
     is_seen = models.BooleanField(default=False)
     active = models.BooleanField(default=True)
@@ -61,7 +44,8 @@ class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     category = models.CharField(max_length=1, choices=CATEGORY_CHOICES)
     last_text = models.TextField(null=True, blank=True)
-    not_seen_count = models.IntegerField(default=1)
+    position = models.CharField(max_length=255, blank=True)
+    not_seen_count = models.IntegerField(default=0)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 

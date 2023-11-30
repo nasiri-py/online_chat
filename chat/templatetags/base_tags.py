@@ -1,15 +1,18 @@
 from django import template
 from django.db.models import Q
 
-from chat.models import Notification, UserOnlineStatus
+from chat.models import UserOnlineStatus, Message
 
 register = template.Library()
 
 
 @register.simple_tag
-def notif_filter(slug, username):
-    notif = Notification.objects.filter(Q(slug=slug) | Q(slug=username)).order_by('updated').first()
-    last_text = notif.last_text
+def notif_filter(username, slug, category):
+    if category == 'r':
+        message = Message.objects.filter((Q(author__username=username) & Q(slug=slug)) | (Q(author__username=slug) & Q(slug=username))).order_by('-created').first()
+    else:
+        message = Message.objects.filter(slug=slug).order_by('-created').first()
+    last_text = message.text
     if last_text is None:
         last_text = 'No Message'
     return last_text

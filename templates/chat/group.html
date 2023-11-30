@@ -1,159 +1,9 @@
-{% load static %}
+{% extends 'base.html' %}
 
-{% load base_tags %}
 
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
-          integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
-          integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <link rel="stylesheet" type="text/css"
-          href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css">
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
-            crossorigin="anonymous"></script>
-    <script type="text/javascript"
-            src="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.js"></script>
-    <link rel="stylesheet" href="{% static 'chat/css/style.css' %}">
-    <title>Document</title>
-</head>
-<body>
-
-<div class="container-fluid h-100">
-    <div class="row justify-content-center h-100">
-        <div class="col-md-3 col-xl-3 chat">
-            <div class="offcanvas offcanvas-start position-absolute bg-dark w-50" tabindex="-1"
-                 id="MenuoffcanvasExample"
-                 aria-labelledby="MenuoffcanvasExampleLabel">
-                <div class="offcanvas-header">
-                    <a href="{% url 'accounts:profile' %}" class="d-flex bd-highlight">
-                        <div class="img_cont">
-                            <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
-                                 class="rounded-circle user_img">
-                        </div>
-                        <div class="user_info">
-                            <span>{{ user.username }}</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="offcanvas-body px-0">
-                    <ul>
-                        <li>
-                            <a class="d-flex align-items-baseline" type="button" data-toggle="modal"
-                               data-target="#NewRoomModalCenter">
-                                <i class="fas fa-user"></i>
-                                New Room
-                            </a>
-                        </li>
-                        <li>
-                            <a class="d-flex align-items-baseline" type="button" data-toggle="modal"
-                               data-target="#NewGroupModalCenter">
-                                <i class="fas fa-users"></i>
-                                New Group
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            <div class="card mb-sm-3 mb-md-0 contacts_card">
-                <div class="card-header">
-                    <div class="input-group">
-                        <a class="me-3 my-auto" data-bs-toggle="offcanvas" href="#MenuoffcanvasExample" role="button"
-                           aria-controls="MenuoffcanvasExample">
-                            <i class="fas fa-bars menu-icon"></i>
-                        </a>
-                        <input id="username-input" type="text" class="form-control search" placeholder="Search..."
-                               aria-label="Receiver ID" aria-describedby="addon-wrapping">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text search_btn"><i class="fas fa-search"></i></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body contacts_body">
-                    <ul class="contacts" id="contacts">
-                        {% for member in members %}
-                            <li class="{% if member.slug in request.path %}active{% endif %}" id="{{ member.slug }}_contact">
-                                <a href="{% if member.category == 'g' %}{% url 'chat:group' member.slug %}{% else %}{% url 'chat:room' member.slug %}{% endif %}"
-                                   class="d-flex bd-highlight position-relative">
-                                    <div class="img_cont">
-                                        <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
-                                             class="rounded-circle user_img">
-                                        {% if member.category == 'r' %}
-                                            {% online_status member.slug as online %}
-                                            {% if online %}
-                                                <span id="{{ member.slug }}_status" class="online_icon"></span>
-                                            {% else %}
-                                                <span id="{{ member.slug }}_status" class=""></span>
-                                            {% endif %}
-                                        {% endif %}
-                                    </div>
-                                    <div class="user_info">
-                                        <span>
-                                            {% if member.slug == user.username and member.user == user %}Saved
-                                                Messages{% else %}
-                                                {{ member.title }}{% endif %}
-                                        </span>
-                                        <p id="{{ member.slug }}">{% notif_filter member.slug member.user %}</p>
-                                    </div>
-                                    <span id="{{ member.slug }}_not_seen_count_badge" class="not_seen_count_badge {% if member.not_seen_count == 0 %}d-none{% endif %}">{{ member.not_seen_count }}</span>
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-        </div>
-        <!-- New Room Modal -->
-        <div class="modal fade" id="NewRoomModalCenter" tabindex="-1" role="dialog"
-             aria-labelledby="NewRoomModalCenterTitle" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content add-chat-modal bg-dark">
-                    <div class="modal-body">
-                        <p>Modal body text goes here.</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary">Next</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- New Group Modal -->
-        <div class="modal fade" id="NewGroupModalCenter" tabindex="-1" role="dialog"
-             aria-labelledby="NewGroupModalCenterTitle" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content add-chat-modal bg-dark">
-                    <div class="modal-body">
-                        <form action="{% url 'chat:create_group' %}" method="POST">
-                            {% csrf_token %}
-                            <div class="form-group">
-                                <label for="id_group_name">Group Name</label>
-                                <input type="text" class="form-control new-chat-form" name="group_name"
-                                       id="id_group_name">
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Create</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-8 col-xl-6 chat">
-            <div class="card">
+{% block content %}
+    <div class="col-md-8 col-xl-6 chat">
+         <div class="card">
                 <div class="card-header msg_head d-flex justify-content-between">
                     <div class="d-flex bd-highlight">
                         <div class="img_cont">
@@ -162,11 +12,7 @@
                         </div>
                         <div class="user_info">
                             <span>{{ chatObject.title }}</span>
-                            <p>members</p>
-                        </div>
-                        <div class="video_cam">
-                            <span><i class="fas fa-video"></i></span>
-                            <span><i class="fas fa-phone"></i></span>
+                            <p>{{ chatObject.member.all|length }} members</p>
                         </div>
                     </div>
                     <div class="dropstart">
@@ -209,15 +55,21 @@
                             <div class="media-body">
                                 {% if message.author_id == user.id %}
                                     <div class="d-flex justify-content-end mb-4">
-                                        <div class="msg_cotainer_send pb-3">
+                                        <div class="msg_cotainer_send">
                                             <p class="mb-1">{{ message.text }}</p>
-                                            <span class="msg_time_send">8:55 AM, Today</span>
-                                            <div class="msg-check-icon">
-                                                {% if message.is_seen %}
-                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><path d="M11.602 13.7599L13.014 15.1719L21.4795 6.7063L22.8938 8.12051L13.014 18.0003L6.65 11.6363L8.06421 10.2221L10.189 12.3469L11.6025 13.7594L11.602 13.7599ZM11.6037 10.9322L16.5563 5.97949L17.9666 7.38977L13.014 12.3424L11.6037 10.9322ZM8.77698 16.5873L7.36396 18.0003L1 11.6363L2.41421 10.2221L3.82723 11.6352L3.82604 11.6363L8.77698 16.5873Z" fill="rgba(255,255,255,1)"></path></svg>
-                                                {% else %}
-                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><path d="M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z" fill="rgba(255,255,255,1)"></path></svg>
-                                                {% endif %}
+                                            <div class="d-flex justify-content-between align-items-baseline">
+                                                <span class="msg_time_send">{{ message.created }}</span>
+                                                <div class="msg-check-icon" id="{{ message.id }}_not_seen">
+                                                    {% if message.is_seen %}
+                                                    <div class="seen-msg">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><path d="M11.602 13.7599L13.014 15.1719L21.4795 6.7063L22.8938 8.12051L13.014 18.0003L6.65 11.6363L8.06421 10.2221L10.189 12.3469L11.6025 13.7594L11.602 13.7599ZM11.6037 10.9322L16.5563 5.97949L17.9666 7.38977L13.014 12.3424L11.6037 10.9322ZM8.77698 16.5873L7.36396 18.0003L1 11.6363L2.41421 10.2221L3.82723 11.6352L3.82604 11.6363L8.77698 16.5873Z" fill="rgba(255,255,255,1)"></path></svg>
+                                                    </div>
+                                                    {% else %}
+                                                        <div class="not-seen-msg">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><path d="M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z" fill="rgba(255,255,255,1)"></path></svg>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -227,10 +79,10 @@
                                             <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
                                                  class="rounded-circle user_img_msg">
                                         </div>
-                                        <div class="msg_cotainer pb-3">
+                                        <div class="msg_cotainer" aria-valuetext="{% if user in message.member_not_seen.all %}{{ user.username }}_not_seen{% else %}seen{% endif %}" id="{{ message.id }}">
                                             <h6>{{ message.author }}</h6>
                                             <p class="mb-1">{{ message.text }}</p>
-                                            <span class="msg_time">8:40 AM, Today</span>
+                                            <span class="msg_time">{{ message.created }}</span>
                                         </div>
                                     </div>
                                 {% endif %}
@@ -257,22 +109,67 @@
                     </div>
                 </div>
             </div>
-        </div>
     </div>
-</div>
-<script>
+{% endblock %}
+
+{% block script %}
+    <script>
     var chat_id = {{ chat_id_json }};
+    var pagPosition = {{ page_position }}
     var msgdiv = $('#messages-list');
     var memberdiv = $('#members-list');
     var lasttesxt = $('#last-text')
+    var msgScroll = $(`#msg-scroll-down`)
 
-    window.onload = function (e) {
-        msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
+    if (pagPosition === '') {
+        pagPosition = msgdiv.prop("scrollHeight")
     }
+
+    msgdiv.scroll(function () {
+        if (msgdiv.prop("scrollHeight") - msgdiv.scrollTop() > msgdiv.height() * 2) {
+            msgScroll.removeClass('d-none');
+            $('#msg-not-seen-count-scroll-down').addClass('d-none');
+            msgScroll.on('click', function (e){
+                msgdiv.animate({scrollTop: msgdiv.prop("scrollHeight")}, (msgdiv.prop("scrollHeight") - pagPosition)/10)
+                msgScroll.addClass('d-none')
+
+            })
+        } else {
+            msgScroll.addClass('d-none');
+        }
+    });
+
+    {#window.onload = function (e) {#}
+        {#if (pagPosition === msgdiv.prop("scrollHeight")){#}
+        {#    msgdiv.scrollTop(msgdiv.prop("scrollHeight") - 10);#}
+        {#    setTimeout(() => {#}
+        {#      msgdiv.scrollTop(msgdiv.prop("scrollHeight"));#}
+        {#    }, "1000");#}
+        {##}
+        {# } #}
+    {# } #}
+
+    document.querySelector('#msg-input').focus();
+    document.querySelector('#msg-input').onkeyup = function (e) {
+        if (e.keyCode === 13) {  // enter, return
+            document.querySelector('#msg-submit').click();
+        }
+    };
+
+    document.querySelector('#msg-submit').onclick = function (e) {
+        var messageInputDom = document.querySelector('#msg-input');
+        var message = messageInputDom.value;
+        socket.send(JSON.stringify({'text': message}));
+        messageInputDom.value = '';
+    };
 
     var socket = new WebSocket(
         'ws://' + window.location.host +
         '/ws/group/' + chat_id + '/');
+
+    socket.onopen = function (e) {
+        console.log('GROUP CONSUMER CONNECTED')
+    }
 
     socket.onmessage = function (e) {
         var message = JSON.parse(e.data);
@@ -303,18 +200,35 @@
                 break;
             case "msg":
                 lasttesxt.text(message['text']);
-                msgdiv.append(`
-                  <div class="d-flex justify-content-start mb-4">
-                    <div class="img_cont_msg">
-						<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img_msg">
-					</div>
-                    <div class="msg_cotainer pb-3">
-                        <h6>USERNAME</h6>
-                            <p class="mb-1">MESSAGE</p>
-                        <span class="msg_time">8:40 AM, Today</span>
-                    </div>
-                  </div>
-                `.replace('USERNAME', message['sender']).replace('MESSAGE', message['text']));
+                if (loggedin_user === message['sender']) {
+                    msgdiv.append(`
+                        <div class="d-flex justify-content-end mb-4">
+                            <div class="msg_cotainer_send pb-3">
+                                <p class="mb-1">MESSAGE</p>
+                                <span class="msg_time_send">TIME</span>
+                                <div class="msg-check-icon">
+                                    <div class="not-seen-msg" id="${message['id']}_not_seen">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><path d="M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z" fill="rgba(255,255,255,1)"></path></svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `.replace('MESSAGE', message['text']).replace('TIME', message['time']));
+                    msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
+                } else {
+                    msgdiv.append(`
+                      <div class="d-flex justify-content-start mb-4">
+                        <div class="img_cont_msg">
+                            <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img_msg">
+                        </div>
+                        <div class="msg_cotainer" aria-valuetext="${loggedin_user}_not_seen" id="${message['id']}">
+                            <h6>USERNAME</h6>
+                                <p class="mb-1">MESSAGE</p>
+                            <span class="msg_time">TIME</span>
+                        </div>
+                      </div>
+                    `.replace('USERNAME', message['sender']).replace('MESSAGE', message['text']).replace('TIME', message['time']));
+                }
                 break;
             default:
                 break;
@@ -328,37 +242,11 @@
         console.error('Socket closed unexpectedly');
     };
 
-    document.querySelector('#msg-input').focus();
-    document.querySelector('#msg-input').onkeyup = function (e) {
-        if (e.keyCode === 13) {  // enter, return
-            document.querySelector('#msg-submit').click();
-        }
-    };
-
-    document.querySelector('#msg-submit').onclick = function (e) {
-        var messageInputDom = document.querySelector('#msg-input');
-        var message = messageInputDom.value;
-
-        lasttesxt.text(message);
-        msgdiv.append(`
-            <div class="d-flex justify-content-end mb-4">
-                <div class="msg_cotainer_send pb-3">
-                    <p class="mb-1">MESSAGE</p>
-                    <span class="msg_time_send">8:55 AM, Today</span>
-                </div>
-            </div>
-        `.replace('MESSAGE', message));
-
-        msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
-
-        socket.send(JSON.stringify({'text': message}));
-
-        messageInputDom.value = '';
-    };
 </script>
-<script type='text/javascript'>
+    <script type='text/javascript'>
 
     const loggedin_user = {{ username_json }}
+    const siteDomain = 'http://127.0.0.1:8000/'
 
     const notify_socket = new WebSocket(
     'ws://'
@@ -367,20 +255,15 @@
     +'notify/'
 )
 
-notify_socket.onopen = function(e){
-    if (msgdiv.prop("scrollHeight") - msgdiv.scrollTop() < msgdiv.height() * 2) {
-            msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
-            notify_socket.send(JSON.stringify({
-                'username': loggedin_user,
-                'path': window.location.pathname
-            }))
-        }
-}
-
 
 notify_socket.onmessage = function(e){
-        const data = JSON.parse(e.data)
-        const contacts = $('#contacts')
+    online_status.send(JSON.stringify({
+        'username': loggedin_user,
+        'type': 'open'
+    }))
+
+    const data = JSON.parse(e.data)
+    const contacts = $('#contacts')
         if (data.category === 'g') {
             if (window.location.pathname.includes(data.slug)) {
                 var active = 'active'
@@ -388,9 +271,10 @@ notify_socket.onmessage = function(e){
                 var active = ''
             }
             $(`#${data.slug}_contact`).remove()
+            console.log(data.last_text)
             contacts.prepend(`
                 <li class="${active}" id="${data.slug}_contact">
-                    <a href="group/${data.slug}"
+                    <a href="${siteDomain}group/${data.slug}"
                        class="d-flex bd-highlight position-relative">
                         <div class="img_cont">
                             <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
@@ -400,9 +284,9 @@ notify_socket.onmessage = function(e){
                             <span>
                                 ${data.title}
                             </span>
-                            <p id="${data.user}_last_text">${data.last_text}</p>
+                            <p id="${data.user}_${data.slug}_last_text">${data.last_text}</p>
                         </div>
-                        <span id="${data.user}_not_seen_count_badge" class="not_seen_count_badge">${data.not_seen_count}</span>
+                        <span id="${data.user}_${data.slug}_not_seen_count_badge" class="not_seen_count_badge">${data.not_seen_count}</span>
                     </a>
                 </li>
             `)
@@ -412,13 +296,13 @@ notify_socket.onmessage = function(e){
             } else {
                 var active = ''
             }
-            {#$(`#${data.user}_contact`).remove()#}
+            $(`#${data.user}_contact`).remove()
             $(`#${data.slug}_contact`).remove()
              if (data.user === data.slug) {
                 $(`#${data.user}_contact_SavedMessages`).remove()
                 contacts.prepend(`
                    <li class="${active}" id="${data.slug}_contact_SavedMessages">
-                       <a href="room/${data.slug}"
+                       <a href="${siteDomain}room/${data.slug}"
                           class="d-flex bd-highlight position-relative">
                            <div class="img_cont">
                                <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
@@ -429,16 +313,15 @@ notify_socket.onmessage = function(e){
                                <span>
                                   Saved Messages
                                </span>
-                               <p id="${data.user}_last_text">${data.last_text}</p>
+                               <p id="${data.user}_${data.slug}_last_text">${data.last_text}</p>
                            </div>
                        </a>
                    </li>
               `)
             } else if (data.slug === loggedin_user) {
-                 console.log(1)
                contacts.prepend(`
                    <li class="${active}" id="${data.user}_contact">
-                       <a href="room/${data.user}"
+                       <a href="${siteDomain}room/${data.user}"
                           class="d-flex bd-highlight position-relative">
                            <div class="img_cont">
                                <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
@@ -449,14 +332,12 @@ notify_socket.onmessage = function(e){
                                <span>
                                   ${data.user}
                                </span>
-                               <p id="${data.user}_last_text">${data.last_text}</p>
+                               <p id="${data.user}_${data.slug}_last_text">${data.last_text}</p>
                            </div>
-                           <span id="${data.user}_not_seen_count_badge" class="not_seen_count_badge d-none">${data.not_seen_count}</span>
                        </a>
                    </li>
               `)
             } else if (data.user === loggedin_user) {
-                 console.log(2)
                  if (window.location.pathname.includes(data.slug)) {
                 var active = 'active'
             } else {
@@ -464,7 +345,7 @@ notify_socket.onmessage = function(e){
             }
                contacts.prepend(`
                    <li class="${active}" id="${data.slug}_contact">
-                       <a href="room/${data.slug}"
+                       <a href="${siteDomain}room/${data.slug}"
                           class="d-flex bd-highlight position-relative">
                            <div class="img_cont">
                                <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
@@ -475,47 +356,39 @@ notify_socket.onmessage = function(e){
                                <span>
                                   ${data.slug}
                                </span>
-                               <p id="${data.user}_last_text">${data.last_text}</p>
+                               <p id="${data.user}_${data.slug}_last_text">${data.last_text}</p>
                            </div>
-                            <span id="${data.user}_not_seen_count_badge" class="not_seen_count_badge">${data.not_seen_count}</span>
+                            <span id="${data.user}_${data.slug}_not_seen_count_badge" class="not_seen_count_badge">${data.not_seen_count}</span>
                        </a>
                    </li>
               `)
             }
         }
-        if (data.user !== data.slug && window.location.pathname.includes(data.slug)) {
-            const msgScroll = $(`#msg-scroll-down`)
-            const msgNotif = $(`#${data.user}_not_seen_count_badge`)
+
+        if (window.location.pathname.includes(data.slug)) {
+            const msgNotif = $(`#${data.user}_${data.slug}_not_seen_count_badge`)
+            const msgNotifScroll = $(`#msg-not-seen-count-scroll-down`)
             if (msgdiv.prop("scrollHeight") - msgdiv.scrollTop() < msgdiv.height() * 2) {
                 msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
                 msgScroll.addClass('d-none')
                 msgNotif.addClass('d-none')
-                notify_socket.send(JSON.stringify({
-                    'username': loggedin_user,
-                    'path': window.location.pathname
-                }))
+
             } else {
                 msgScroll.removeClass('d-none')
                 msgScroll.addClass('d-block')
-                $(`#msg-not-seen-count-scroll-down`).text(`${data.not_seen_count}`)
+                msgNotifScroll.removeClass('d-none')
+                msgNotifScroll.text(`${data.not_seen_count}`)
                 msgScroll.on('click', function (e){
-                    msgdiv.scrollTop(msgdiv.prop("scrollHeight"))
+                    msgdiv.animate({scrollTop: msgdiv.prop("scrollHeight")}, (msgdiv.prop("scrollHeight") - pagPosition)/10)
+                    {#msgdiv.scrollTop(pagPosition + 1000)#}
                     msgScroll.addClass('d-none')
                     msgNotif.addClass('d-none')
-                        notify_socket.send(JSON.stringify({
-                            'username': loggedin_user,
-                            'path': window.location.pathname
-                        }))
 
                 })
                 msgdiv.on('scroll', function (e){
                     if (msgdiv.prop("scrollHeight") - msgdiv.scrollTop() < msgdiv.height() * 2) {
                         msgScroll.addClass('d-none')
                         msgNotif.addClass('d-none')
-                        notify_socket.send(JSON.stringify({
-                            'username': loggedin_user,
-                            'path': window.location.pathname
-                        }))
                     }
                 })
             }
@@ -566,6 +439,64 @@ notify_socket.onclose = function(e){
             }
         }
     }
+
+
+    const seen_message_socket = new WebSocket(
+        'ws://'
+        + window.location.host
+        + '/ws/'
+        + 'seen_message/'
+        + chat_id + '/'
+    )
+
+    function  checkInView(elem, partial)
+        {
+            var container = $("#messages-list");
+            var elemTop = $(elem).offset().top - container.offset().top;
+            var elemBottom = elemTop + $(elem).height();
+
+            if (((elemTop < 0 && elemBottom > 0 ) || (elemTop > 0 && elemTop <= container.height())) && partial) {
+                if (elem.attr('aria-valuetext') === `${loggedin_user}_not_seen`) {
+                    return elem.attr('id');
+                }
+            }
+        }
+
+   seen_message_socket.onopen = function (e) {
+        console.log('SEEN MESSAGE CONSUMER CONNECTED')
+        msgdiv.scrollTop(pagPosition - 100);
+        $(document).ready(function(){
+            var a = []
+            $("#messages-list").scroll(function(){
+               var result= '';
+               $.each( $("#messages-list .msg_cotainer"),function(i,e){
+                    result = checkInView($(e), true);
+                    if (result !== undefined && !a.includes(result) ) {
+                        a.push(result)
+                        seen_message_socket.send(JSON.stringify({
+                            'msg_id': result,
+                            'slug': chat_id,
+                            'user': loggedin_user,
+                            'category': 'g',
+                            'position': msgdiv.prop("scrollHeight")
+                        }))
+                    }
+                });
+            });
+        });
+   }
+
+    seen_message_socket.onmessage = function (e) {
+        const data = JSON.parse(e.data)
+        if (data.sender === loggedin_user) {
+            const msgSeenCheck = document.getElementById(`${data.msg_id}_not_seen`)
+
+            msgSeenCheck.innerHTML = `<div class="seen-msg">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><path d="M11.602 13.7599L13.014 15.1719L21.4795 6.7063L22.8938 8.12051L13.014 18.0003L6.65 11.6363L8.06421 10.2221L10.189 12.3469L11.6025 13.7594L11.602 13.7599ZM11.6037 10.9322L16.5563 5.97949L17.9666 7.38977L13.014 12.3424L11.6037 10.9322ZM8.77698 16.5873L7.36396 18.0003L1 11.6363L2.41421 10.2221L3.82723 11.6352L3.82604 11.6363L8.77698 16.5873Z" fill="rgba(255,255,255,1)"></path></svg>
+                                      </div>`
+        }
+    }
+
+
 </script>
-</body>
-</html>
+{% endblock %}

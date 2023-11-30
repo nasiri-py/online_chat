@@ -14,6 +14,7 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 
 from chat import routing as chat_routing
+from calls import routing as videocall_routing
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
@@ -21,7 +22,8 @@ application = ProtocolTypeRouter({
     'http': get_asgi_application(),
     'websocket': AuthMiddlewareStack(
         URLRouter(
-            chat_routing.websocket_urlpatterns
+            chat_routing.websocket_urlpatterns +
+            videocall_routing.websocket_urlpatterns
         )
     )
 })

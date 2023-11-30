@@ -8,4 +8,5 @@ websocket_urlpatterns = [
     path('ws/room/<str:username>/', consumers.RoomConsumer.as_asgi()),
     path('ws/online/', consumers.UserOnlineStatusConsumer.as_asgi()),
     path('ws/notify/', consumers.NotificationConsumer.as_asgi()),
+    path('ws/seen_message/<str:slug>/', consumers.SeenMessageConsumer.as_asgi()),
 ]

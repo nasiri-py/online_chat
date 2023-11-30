@@ -44,8 +44,9 @@ INSTALLED_APPS = [
     'django_gravatar',
 
     # my apps
-    'chat',
     'core',
+    'chat',
+    'calls',
 ]
 
 MIDDLEWARE = [
