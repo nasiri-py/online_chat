@@ -1,6 +1,7 @@
 {% load static %}
 
 {% load base_tags %}
+{% load gravatar %}
 
 <!doctype html>
 <html lang="en">
@@ -25,70 +26,79 @@
 
 <div class="container-fluid h-100">
     <div class="row justify-content-center h-100">
+        {% include 'includes/messages.html' %}
         <div class="col-md-3 col-xl-3 chat">
-            <div class="offcanvas offcanvas-start position-absolute bg-dark w-50" tabindex="-1"
-                 id="MenuoffcanvasExample"
-                 aria-labelledby="MenuoffcanvasExampleLabel">
-                <div class="offcanvas-header">
-                    <a href="{% url 'accounts:profile' %}" class="d-flex bd-highlight">
-                        <div class="img_cont">
-                            <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
-                                 class="rounded-circle user_img">
-                        </div>
-                        <div class="user_info">
-                            <span>{{ user.username }}</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="offcanvas-body px-0">
-                    <ul>
-                        <li>
-                            <a class="d-flex align-items-baseline" type="button" data-toggle="modal"
-                               data-target="#NewRoomModalCenter">
-                                <i class="fas fa-user"></i>
-                                New Room
-                            </a>
-                        </li>
-                        <li>
-                            <a class="d-flex align-items-baseline" type="button" data-toggle="modal"
-                               data-target="#NewGroupModalCenter">
-                                <i class="fas fa-users"></i>
-                                New Group
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
             <div class="card mb-sm-3 mb-md-0 contacts_card">
                 <div class="card-header">
-                    <div class="input-group">
-                        <a class="me-3 my-auto" data-bs-toggle="offcanvas" href="#MenuoffcanvasExample" role="button"
-                           aria-controls="MenuoffcanvasExample">
-                            <i class="fas fa-bars menu-icon"></i>
-                        </a>
-                        <input id="username-input" type="text" class="form-control search" placeholder="Search..."
-                               aria-label="Receiver ID" aria-describedby="addon-wrapping">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text search_btn"><i class="fas fa-search"></i></span>
+                    <div class="row">
+                        <div class="dropstart col-1">
+                            <a type="button" class="dropdown-toggle mb-3"
+                               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span id="action_menu_btn"><i class="fas fa-bars menu-icon" style="top:-2px; position:absolute; left:-21px;"></i></span>
+                            </a>
+                            <div class="action_menu dropdown-menu main-menu">
+                                <div class="offcanvas-header pb-3 ps-2">
+                                    <a href="{% url 'accounts:profile' %}" class="d-flex bd-highlight">
+                                        <div class="img_cont">
+                                            <img src="{{ user.email|gravatar:"50" }}"
+                                                 class="rounded-circle user_img mb-2 me-2">
+                                        </div>
+                                        <div class="user_info">
+                                            <span>{{ user.username }}</span>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="offcanvas-body px-0">
+                                    <ul>
+                                        <li>
+                                            <a class="d-flex align-items-baseline" type="button" data-toggle="modal"
+                                               data-target="#NewRoomModalCenter">
+                                                <i class="fas fa-user"></i>
+                                                New Room
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="d-flex align-items-baseline" type="button" data-toggle="modal"
+                                               data-target="#NewGroupModalCenter">
+                                                <i class="fas fa-users"></i>
+                                                New Group
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
+                        <form id="search-form" role="search" class="col-11"
+                              action="{% url 'chat:search_chat' %}" method="get" data-url_root="{% url 'chat:search_chat' %}">
+                            <input id="search-input" class="form-control search" type="text" name="search"
+                                   placeholder="Search..." data-url_root="product/">
+                        </form>
                     </div>
                 </div>
                 <div class="card-body contacts_body">
+                    <ul class="d-none"
+                        id="results-box">
+                    </ul>
                     <ul class="contacts" id="contacts">
                         {% for member in members %}
-                            <li class="{% if member.slug in request.path %}active{% endif %}" id="{{ member.slug }}_contact{% if member.slug == user.username and member.user == user %}_SavedMessages{% endif %}">
+                            <li class="{% if member.slug in request.path %}active{% endif %}"
+                                id="{{ member.slug }}_contact{% if member.slug == user.username and member.user == user %}_SavedMessages{% endif %}">
                                 <a href="{% if member.category == 'g' %}{% url 'chat:group' member.slug %}{% else %}{% url 'chat:room' member.slug %}{% endif %}"
                                    class="d-flex bd-highlight position-relative">
                                     <div class="img_cont">
-                                        <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
-                                             class="rounded-circle user_img">
                                         {% if member.category == 'r' %}
+                                            {% get_member_email member.slug as usermail %}
+                                            <img src="{{ usermail|gravatar:"75" }}"
+                                                 class="rounded-circle user_img">
                                             {% online_status member.slug as online %}
                                             {% if online %}
                                                 <span id="{{ member.slug }}_status" class="online_icon"></span>
                                             {% else %}
                                                 <span id="{{ member.slug }}_status" class=""></span>
                                             {% endif %}
+                                        {% else %}
+                                            <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
+                                                 class="rounded-circle user_img">
                                         {% endif %}
                                     </div>
                                     <div class="user_info">
@@ -106,7 +116,8 @@
                                             {% notif_filter member.user member.slug member.category %}
                                         </p>
                                     </div>
-                                    <span id="{{ member.user }}_{{ member.slug }}_not_seen_count_badge" class="not_seen_count_badge {% if member.not_seen_count == 0 %}d-none{% endif %}">{{ member.not_seen_count }}</span>
+                                    <span id="{{ member.user }}_{{ member.slug }}_not_seen_count_badge"
+                                          class="not_seen_count_badge {% if member.not_seen_count == 0 %}d-none{% endif %}">{{ member.not_seen_count }}</span>
                                 </a>
                             </li>
                         {% endfor %}
@@ -118,62 +129,68 @@
         <div class="modal fade" id="NewRoomModalCenter" tabindex="-1" role="dialog"
              aria-labelledby="NewRoomModalCenterTitle" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content add-chat-modal bg-dark">
+                <form class="modal-content add-chat-modal bg-dark" action="{% url 'chat:search_user' %}?next={{ request.path }}" method="POST">
                     <div class="modal-body">
-                        <p>Modal body text goes here.</p>
+                        {% csrf_token %}
+                        <div class="form-group mb-0">
+                            <label for="id_room_name">Enter Username</label>
+                            <input type="text" class="form-control new-chat-form" name="room_name"
+                                   id="id_room_name">
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary">Next</button>
+                        <button type="submit" class="btn btn-primary">Search</button>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
         <!-- New Group Modal -->
         <div class="modal fade" id="NewGroupModalCenter" tabindex="-1" role="dialog"
              aria-labelledby="NewGroupModalCenterTitle" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content add-chat-modal bg-dark">
+                <form class="modal-content add-chat-modal bg-dark" action="{% url 'chat:create_group' %}" method="POST">
                     <div class="modal-body">
-                        <form action="{% url 'chat:create_group' %}" method="POST">
-                            {% csrf_token %}
-                            <div class="form-group">
-                                <label for="id_group_name">Group Name</label>
-                                <input type="text" class="form-control new-chat-form" name="group_name"
-                                       id="id_group_name">
-                            </div>
-                        </form>
+                        {% csrf_token %}
+                        <div class="form-group mb-0">
+                            <label for="id_group_name">Group Name</label>
+                            <input type="text" class="form-control new-chat-form" name="group_name"
+                                   id="id_group_name">
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary">Create</button>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
         {% block content %}
-        
+
         {% endblock %}
     </div>
 </div>
 
 
 <div class="container">
-   <div class="row d-none" id="videocall_section">
+    <div class="row d-none" id="videocall_section">
         <div class="col-12 col-lg-6 card-video">
-                    <video class="call-emitter" id="video-emitter" autoplay></video>
+            <video class="call-emitter" id="video-emitter" autoplay></video>
         </div>
         <div class="col-12 col-lg-6 card-video">
-                    <video class="call-receiver" id="video-receiver" autoplay></video>
+            <video class="call-receiver" id="video-receiver" autoplay></video>
         </div>
     </div>
-    <div id="videocall_status" class="d-none" style="background-image: url('https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg')">
+    <div id="videocall_status" class="d-none"
+         style="background-image: url('https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg')">
         <div id="call-status" class="text-center font-weight-bold"></div>
         <div class="d-flex justify-content-around">
             <span id="mute-video" class="btn"><i class="fas fa-microphone"></i></span>
             <span id="disable-video" class="btn"><i class="fas fa-video"></i></span>
-            <button id="btnHangup" type="button" class="btn btn-danger d-none"><i class="fas fa-phone phone-hangup"></i></button>
-            <button id="btnCancel" type="button" class="btn btn-danger"><i class="fas fa-phone phone-hangup"></i></button>
+            <button id="btnHangup" type="button" class="btn btn-danger d-none"><i class="fas fa-phone phone-hangup"></i>
+            </button>
+            <button id="btnCancel" type="button" class="btn btn-danger"><i class="fas fa-phone phone-hangup"></i>
+            </button>
         </div>
     </div>
     <div id="call-request-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModal2"
@@ -182,8 +199,10 @@
             <div class="modal-content">
                 <div class="modal-body"></div>
                 <div class="modal-footer">
-                    <button id="btnDeclineOffer" type="button" class="btn btn-danger"><i class="fas fa-phone phone-hangup"></i></button>
-                    <button id="btnAcceptOffer" type="button" class="btn btn-success"><i class="fas fa-phone phone-answer"></i></button>
+                    <button id="btnDeclineOffer" type="button" class="btn btn-danger"><i
+                            class="fas fa-phone phone-hangup"></i></button>
+                    <button id="btnAcceptOffer" type="button" class="btn btn-success"><i
+                            class="fas fa-phone phone-answer"></i></button>
                 </div>
             </div>
         </div>
@@ -222,7 +241,7 @@
         src="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.js"></script>
 
 {% block script %}
-    
+
 {% endblock %}
 
 <script>
@@ -315,7 +334,7 @@
                         remoteVideo.srcObject = null;
 
                         clearInterval(CallTimerId);
-                        {#$("#offer-status-modal").modal('show').find('.modal-body').text("Video Call was finished.");#}
+                    {#$("#offer-status-modal").modal('show').find('.modal-body').text("Video Call was finished.");#}
                         break;
                     case VC_CANCEL:
                         $('#btnCall').removeClass("d-none");
@@ -463,33 +482,33 @@
     }
 
 
-   muteVideo.addEventListener('click', function (e) {
+    muteVideo.addEventListener('click', function (e) {
         localVideo.srcObject.getTracks().forEach((track) => {
-            if (track.readyState == 'live' && track.kind === 'audio'){
+            if (track.readyState == 'live' && track.kind === 'audio') {
                 if (track.enabled === true) {
                     track.enabled = false;
                     this.innerHTML = `<i class="fas fa-microphone-slash"></i>`;
-                }
-                else {
+                } else {
                     track.enabled = true;
                     this.innerHTML = `<i class="fas fa-microphone"></i>`;
                 }
             }
-    })});
+        })
+    });
 
     disableVideo.addEventListener('click', function (e) {
         localVideo.srcObject.getTracks().forEach((track) => {
-            if (track.readyState == 'live' && track.kind === 'video'){
+            if (track.readyState == 'live' && track.kind === 'video') {
                 if (track.enabled === true) {
                     track.enabled = false;
                     this.innerHTML = `<i class="fas fa-video-slash"></i>`;
-                }
-                else {
+                } else {
                     track.enabled = true;
                     this.innerHTML = `<i class="fas fa-video"></i>`;
                 }
             }
-    })});
+        })
+    });
 
     function handleRTCMessage(message) {
         if (message.sdp) {
@@ -551,6 +570,63 @@
         enableCallViews();
         sendMessage({'type': "rejectOffer"})
     };
+
+
+const searchForm = document.getElementById('search-form')
+const searchInput = document.getElementById('search-input')
+const resultsBox = document.getElementById('results-box')
+const contacts = document.getElementById('contacts')
+const siteDomain = 'http://127.0.0.1:8000/'
+const sendSearchData = (chat) => {
+    $.ajax({
+        type: 'GET',
+        url: searchForm.getAttribute('data-url_root'),
+        data: {
+            'chat': chat,
+        },
+        success: (res) => {
+            const data = res.data
+            contacts.classList.add('d-none')
+            if (Array.isArray(data)) {
+                resultsBox.innerHTML = ""
+                data.forEach(chat => {
+                    console.log(chat)
+                    if (chat.category === 'g') {
+                        var cat = 'group'
+                        var chatTitle = chat.title
+                    } else {
+                        var cat = 'room'
+                        var chatTitle = chat.slug
+                    }
+                    resultsBox.innerHTML += `<li class="list-group-item border-bottom">
+                    <a class="user_info" href="${siteDomain}${cat}/${chat.slug}">
+                        <span>${chatTitle}</span>
+                        <p class="ms-4">${chat.last_text}</p>
+                    </a>
+            </li>`
+                })
+            } else {
+                if (searchInput.value.length > 0) {
+                    resultsBox.innerHTML = `<h6 class="text-center my-auto py-5">${data}</h6>`
+                    if (data === 'There is no such Chat...') {
+                    }
+                } else {
+                    resultsBox.classList.add('d-none')
+                    contacts.classList.remove('d-none')
+                }
+            }
+        },
+        error: (err) => {
+            console.log(err)
+        }
+    })
+}
+searchInput.addEventListener('keyup', e => {
+    if (resultsBox.classList.contains('d-none')) {
+        resultsBox.classList.remove('d-none')
+    }
+    sendSearchData(e.target.value)
+});
 </script>
 
 </body>

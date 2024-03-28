@@ -4,18 +4,19 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from chat.models import GroupChat, Message, Notification
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.utils.safestring import mark_safe
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from django.http import JsonResponse
 import json
-
 User = get_user_model()
 
 
 @login_required
 def index(request):
     current_user = request.user
-    members = Notification.objects.filter(user=current_user).exclude(slug=current_user).order_by('-updated')
+    members = Notification.objects.filter(user=current_user).order_by('-updated')
     notifications = Notification.objects.filter((Q(slug=request.user.username) | Q(user=request.user)))
     return render(request, 'chat/index.html',
                   {'members': members,'notifications': notifications,
@@ -26,7 +27,8 @@ def index(request):
 def create_group(request):
     current_user = request.user
     title = request.POST['group_name']
-    chat = GroupChat.objects.create(creator_id=current_user.id, title=title, member=current_user)
+    chat = GroupChat.objects.create(creator_id=current_user.id, title=title)
+    chat.member.add(current_user)
     Notification.objects.create(title=title, slug=chat.unique_code, user_id=current_user.id, category='g')
     return redirect(reverse('chat:group', args=[chat.unique_code]))
 
@@ -43,7 +45,7 @@ def group(request, chat_id):
         page_position = ''
 
     context = {
-        'chatObject': chat, 'messages': messages,
+        'chatObject': chat, 'msgs': messages,
         'members': Notification.objects.filter(user_id=request.user.id).order_by('-updated'),
         'notifications': Notification.objects.filter((Q(slug=chat.unique_code) | Q(user=current_user))),
         'chat_id_json': mark_safe(json.dumps(chat.unique_code)),
@@ -81,6 +83,7 @@ def leave_group(request, chat_id):
     chat = get_object_or_404(GroupChat, unique_code=chat_id)
 
     if chat.creator_id == current_user.id:
+        Notification.objects.filter(slug=chat.unique_code, category='g').delete()
         chat.delete()
 
         channel_layer = get_channel_layer()
@@ -118,8 +121,44 @@ def room(request, username):
         page_position = Notification.objects.get(user=current_user, slug=contact.username).position
     except Notification.DoesNotExist:
         page_position = ''
-    return render(request, 'chat/room.html', {'contact': contact, 'messages': messages, 'members': members, 'notification': notifications,
+    return render(request, 'chat/room.html', {'contact': contact, 'msgs': messages,
+                                              'members': members,'notification': notifications,
                                               'contact_json': mark_safe(json.dumps(contact.username)),
                                               'user_json': mark_safe(json.dumps(current_user.username)),
                                               'username_json': mark_safe(json.dumps(current_user.username)),
                                               'page_position': mark_safe(json.dumps(page_position))})
+
+
+@login_required
+def search_user(request):
+    username = request.POST.get('room_name', False)
+    path = request.GET['next']
+    try:
+        user = User.objects.get(username=username)
+        return redirect(reverse('chat:room', args=[user.username]))
+    except User.DoesNotExist:
+        messages.success(request, 'Sorry, There is no such user')
+        return redirect(path)
+
+
+@login_required
+def search_chat(request):
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        res = None
+        chat = request.GET.get('chat')
+        qs = Notification.objects.filter(title__icontains=chat, user=request.user)
+        if len(qs) > 0 and len(chat) > 0:
+            data = []
+            for pos in qs:
+                item = {
+                    'title': pos.title,
+                    'slug': pos.slug,
+                    'category': pos.category,
+                    'last_text': pos.last_text
+                }
+                data.append(item)
+            res = data
+        else:
+            res = 'There is no such Chat...'
+        return JsonResponse({'data': res})
+    return JsonResponse({})

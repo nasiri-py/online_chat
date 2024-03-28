@@ -1,7 +1,7 @@
 {% extends 'registration/base_registration.html' %}
 
 {% load static %}
-{% load gravatar %}
+{% load base_tags %}
 
 {% block title %}
     Profile
@@ -12,14 +12,13 @@
 {% endblock %}
 
 {% block r_content %}
-    <section class="py-5 bg-light mt-80">
+    <section class="py-5 mt-80">
         <div class="container py-5">
-            <div class="bg-white shadow rounded d-block d-md-flex">
+            <div class="shadow rounded d-block d-md-flex">
                 <div class=" profile-tab-nav border-right p-0">
                     <div class="p-4">
                         <div class="img-circle text-center mb-3">
-{#                            <img src="{% gravatar_url user.email %}" alt="{{ user.username }}"#}
-{#                                 class="shadow">#}
+                            <img src="{{ contact.email|gravatar:"100" }}" class="user_img">
                         </div>
                         <h4 class="text-center">{{ user.username }}</h4>
                     </div>
@@ -47,8 +46,8 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label><h6 class="text-grey me-2">Username</h6></label>
-                                        <input type="text" name="username" class="form-control"
+                                        <label><h6 class="me-2">Username</h6></label>
+                                        <input type="text" name="username" class="form-control new-chat-form"
                                                value="{{ user.username }}"
                                                {% if not user.is_staff %}disabled{% endif %}>
                                         {% for error in form.username.errors %}
@@ -58,8 +57,8 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label><h6 class="text-grey me-2">Email</h6></label>
-                                        <input type="text" name="email" class="form-control"
+                                        <label><h6 class="me-2">Email</h6></label>
+                                        <input type="text" name="email" class="form-control new-chat-form"
                                                value="{{ user.email}}">
                                         {% for error in form.email.errors %}
                                             <p class="error">{{ error }}</p>
@@ -68,8 +67,8 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label><h6 class="text-grey me-2">First Name</h6></label>
-                                        <input type="text" name="first_name" class="form-control"
+                                        <label><h6 class="me-2">First Name</h6></label>
+                                        <input type="text" name="first_name" class="form-control new-chat-form"
                                                value="{{ user.first_name }}">
                                         {% for error in form.first_name.errors %}
                                             <p class="error">{{ error }}</p>
@@ -78,8 +77,8 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label><h6 class="text-grey me-2">Last Name</h6></label>
-                                        <input type="text" name="last_name" class="form-control"
+                                        <label><h6 class="me-2">Last Name</h6></label>
+                                        <input type="text" name="last_name" class="form-control new-chat-form"
                                                value="{{ user.last_name }}">
                                         {% for error in form.last_name.errors %}
                                             <p class="error">{{ error }}</p>
@@ -88,7 +87,7 @@
                                 </div>
                             </div>
                             <div class="text-end">
-                                <button class="cart-btn" type="submit">Update</button>
+                                <button class="btn btn-primary" type="submit">Update</button>
                             </div>
                         </form>
                     </div>

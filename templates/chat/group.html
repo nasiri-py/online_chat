@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% load base_tags %}
+
 
 {% block content %}
     <div class="col-md-8 col-xl-6 chat">
@@ -50,7 +52,7 @@
                     </div>
                 </div>
                 <div class="card-body msg_card_body" id="messages-list">
-                    {% for message in messages %}
+                    {% for message in msgs %}
                         <div class="media">
                             <div class="media-body">
                                 {% if message.author_id == user.id %}
@@ -76,8 +78,8 @@
                                 {% else %}
                                     <div class="d-flex justify-content-start mb-4">
                                         <div class="img_cont_msg">
-                                            <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
-                                                 class="rounded-circle user_img_msg">
+                                            <img src="{{ message.author.email|gravatar:"35" }}"
+                                             class="rounded-circle">
                                         </div>
                                         <div class="msg_cotainer" aria-valuetext="{% if user in message.member_not_seen.all %}{{ user.username }}_not_seen{% else %}seen{% endif %}" id="{{ message.id }}">
                                             <h6>{{ message.author }}</h6>
@@ -205,10 +207,12 @@
                         <div class="d-flex justify-content-end mb-4">
                             <div class="msg_cotainer_send pb-3">
                                 <p class="mb-1">MESSAGE</p>
-                                <span class="msg_time_send">TIME</span>
-                                <div class="msg-check-icon">
-                                    <div class="not-seen-msg" id="${message['id']}_not_seen">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><path d="M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z" fill="rgba(255,255,255,1)"></path></svg>
+                                <div class="d-flex justify-content-between align-items-baseline">
+                                    <span class="msg_time_send">TIME</span>
+                                    <div class="msg-check-icon">
+                                        <div class="not-seen-msg" id="${message['id']}_not_seen">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><path d="M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z" fill="rgba(255,255,255,1)"></path></svg>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -246,7 +250,6 @@
     <script type='text/javascript'>
 
     const loggedin_user = {{ username_json }}
-    const siteDomain = 'http://127.0.0.1:8000/'
 
     const notify_socket = new WebSocket(
     'ws://'
@@ -263,6 +266,7 @@ notify_socket.onmessage = function(e){
     }))
 
     const data = JSON.parse(e.data)
+    console.log(data)
     const contacts = $('#contacts')
         if (data.category === 'g') {
             if (window.location.pathname.includes(data.slug)) {
@@ -271,7 +275,6 @@ notify_socket.onmessage = function(e){
                 var active = ''
             }
             $(`#${data.slug}_contact`).remove()
-            console.log(data.last_text)
             contacts.prepend(`
                 <li class="${active}" id="${data.slug}_contact">
                     <a href="${siteDomain}group/${data.slug}"
@@ -365,7 +368,9 @@ notify_socket.onmessage = function(e){
             }
         }
 
-        if (window.location.pathname.includes(data.slug)) {
+
+        if (window.location.pathname.includes(data.slug) && loggedin_user !== data.sender) {
+            console.log(data.not_seen_count)
             const msgNotif = $(`#${data.user}_${data.slug}_not_seen_count_badge`)
             const msgNotifScroll = $(`#msg-not-seen-count-scroll-down`)
             if (msgdiv.prop("scrollHeight") - msgdiv.scrollTop() < msgdiv.height() * 2) {
@@ -378,6 +383,7 @@ notify_socket.onmessage = function(e){
                 msgScroll.addClass('d-block')
                 msgNotifScroll.removeClass('d-none')
                 msgNotifScroll.text(`${data.not_seen_count}`)
+
                 msgScroll.on('click', function (e){
                     msgdiv.animate({scrollTop: msgdiv.prop("scrollHeight")}, (msgdiv.prop("scrollHeight") - pagPosition)/10)
                     {#msgdiv.scrollTop(pagPosition + 1000)#}

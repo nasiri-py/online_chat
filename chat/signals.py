@@ -39,7 +39,6 @@ def send_notification(sender, instance, created, **kwargs):
     channel_layer = get_channel_layer()
     notification = Notification.objects.get(user_id=instance.user, slug=instance.slug)
 
-    user = str(instance.slug)
     data = {
         'user': notification.user.username,
         'not_seen_count': notification.not_seen_count,
@@ -52,12 +51,13 @@ def send_notification(sender, instance, created, **kwargs):
     if notification.category == 'g':
         chat = GroupChat.objects.get(unique_code=notification.slug)
         for user in chat.member.all():
-            async_to_sync(channel_layer.group_send)(
-                user.username, {
-                    'type': 'send_notification',
-                    'value': json.dumps(data)
-                }
-            )
+            if int(data['not_seen_count']) > 0:
+                async_to_sync(channel_layer.group_send)(
+                    user.username, {
+                        'type': 'send_notification',
+                        'value': json.dumps(data)
+                    }
+                )
     else:
         # async_to_sync(channel_layer.group_send)(
         #     user, {

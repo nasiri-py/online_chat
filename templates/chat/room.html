@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% load base_tags %}
+
 {% block content %}
     <div class="col-md-8 col-xl-6 chat">
             <div class="card">
@@ -7,8 +9,8 @@
                     <div class="d-flex bd-highlight">
                         {% if contact.username == user.username %}
                             <div class="img_cont">
-                                <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
-                                     class="rounded-circle user_img">
+                                <img src="{{ contact.email|gravatar:"75" }}"
+                                             class="rounded-circle user_img">
                             </div>
                             <div class="user_info">
                             <span>
@@ -17,21 +19,20 @@
                             </div>
                         {% else %}
                             <div class="img_cont">
-                                <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
-                                     class="rounded-circle user_img">
+                                <img src="{{ contact.email|gravatar:"75" }}"
+                                             class="rounded-circle user_img">
                             </div>
                             <div class="user_info">
                                 <span>
                                     {{ contact.username }}
                                 </span>
                                 {% if contact.onlinestatus.online_status %}
-                                    <p id="{{ contact.username }}_small">online</p>
+                                    <p id="{{ contact.username }}_small" class="online">online</p>
                                 {% else %}
                                     <p id="{{ contact.username }}_small">offline</p>
                                 {% endif %}
                             </div>
                             <div class="call">
-                                <span><i class="fas fa-phone"></i></span>
                                 <span id="btnVideoCall" aria-valuetext="{{ contact.username }}"><i class="fas fa-video"></i></span>
                             </div>
                         {% endif %}
@@ -51,7 +52,7 @@
                     </div>
                 </div>
                 <div class="card-body msg_card_body" id="messages-list">
-                    {% for message in messages %}
+                    {% for message in msgs %}
                         <div class="media">
                             <div class="media-body">
                                 {% if message.author == user %}
@@ -149,42 +150,47 @@
             'ws://' + window.location.host +
             '/ws/room/' + sender + '/');
 
-        if (sender !== receiver) {
-            socket.onmessage = function (e) {
-                var message = JSON.parse(e.data);
-                lasttesxt.text(message['text']);
-                if (loggedin_user === message['receiver']) {
-                    msgdiv.append(`
-                      <div class="d-flex justify-content-start mb-4">
-                        <div class="msg_cotainer" aria-valuetext="not_seen" id="${message['id']}">
+        socket.onmessage = function (e) {
+            var message = JSON.parse(e.data);
+            lasttesxt.text(message['text']);
+            if (loggedin_user === sender) {
+                console.log(sender)
+                console.log(receiver)
+                if (sender === receiver) {
+                    var seen_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><path d="M11.602 13.7599L13.014 15.1719L21.4795 6.7063L22.8938 8.12051L13.014 18.0003L6.65 11.6363L8.06421 10.2221L10.189 12.3469L11.6025 13.7594L11.602 13.7599ZM11.6037 10.9322L16.5563 5.97949L17.9666 7.38977L13.014 12.3424L11.6037 10.9322ZM8.77698 16.5873L7.36396 18.0003L1 11.6363L2.41421 10.2221L3.82723 11.6352L3.82604 11.6363L8.77698 16.5873Z" fill="rgba(255,255,255,1)"></path></svg>'
+                } else {
+                    var seen_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><path d="M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z" fill="rgba(255,255,255,1)"></path></svg>'
+                }
+                msgdiv.append(`
+                    <div class="d-flex justify-content-end mb-4">
+                        <div class="msg_cotainer_send">
                             <p class="mb-1">MESSAGE</p>
-                            <span class="msg_time">TIME</span>
-                        </div>
-                      </div>
-                    `.replace('MESSAGE', message['text']).replace('TIME', message['time']));
-                    if (msgdiv.prop("scrollHeight") - msgdiv.scrollTop() < msgdiv.height() * 2) {
-                        msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
-                    }
-                } else if (loggedin_user === sender) {
-                    msgdiv.append(`
-                        <div class="d-flex justify-content-end mb-4">
-                            <div class="msg_cotainer_send">
-                                <p class="mb-1">MESSAGE</p>
-                                <div class="d-flex justify-content-between align-items-baseline">
-                                    <span class="msg_time_send">TIME</span>
-                                    <div class="msg-check-icon">
-                                        <div class="not-seen-msg" id="${message['id']}_not_seen">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><path d="M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z" fill="rgba(255,255,255,1)"></path></svg>
-                                        </div>
+                            <div class="d-flex justify-content-between align-items-baseline">
+                                <span class="msg_time_send">TIME</span>
+                                <div class="msg-check-icon">
+                                    <div class="not-seen-msg" id="${message['id']}_not_seen">
+                                        ${seen_icon}
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    `.replace('MESSAGE', message['text']).replace('TIME', message['time']));
+                    </div>
+                `.replace('MESSAGE', message['text']).replace('TIME', message['time']));
+                msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
+            } else if (loggedin_user === message['receiver']) {
+                msgdiv.append(`
+                  <div class="d-flex justify-content-start mb-4">
+                    <div class="msg_cotainer" aria-valuetext="not_seen" id="${message['id']}">
+                        <p class="mb-1">MESSAGE</p>
+                        <span class="msg_time">TIME</span>
+                    </div>
+                  </div>
+                `.replace('MESSAGE', message['text']).replace('TIME', message['time']));
+                if (msgdiv.prop("scrollHeight") - msgdiv.scrollTop() < msgdiv.height() * 2) {
                     msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
                 }
-            };
-        }
+            }
+        };
 
         socket.onclose = function (e) {
             console.error('Socket closed unexpectedly');
@@ -208,7 +214,6 @@
     <script type='text/javascript'>
 
     const loggedin_user = {{ username_json }}
-    const siteDomain = 'http://127.0.0.1:8000/'
 
     const notify_socket = new WebSocket(
     'ws://'
@@ -219,15 +224,15 @@
 
 
 notify_socket.onmessage = function(e){
-    online_status.send(JSON.stringify({
+        online_status.send(JSON.stringify({
         'username': loggedin_user,
         'type': 'open'
     }))
-    console.log(111111111111111)
+
+
     const data = JSON.parse(e.data)
-    console.log(data.user === loggedin_user)
     const contacts = $('#contacts')
-        if (data.category === 'g' && data.user === loggedin_user) {
+        if (data.category === 'g') {
             if (window.location.pathname.includes(data.slug)) {
                 var active = 'active'
             } else {
@@ -269,7 +274,6 @@ notify_socket.onmessage = function(e){
                            <div class="img_cont">
                                <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
                                     class="rounded-circle user_img">
-                                       <span id="${data.slug}_status"></span>
                            </div>
                            <div class="user_info">
                                <span>
@@ -301,10 +305,10 @@ notify_socket.onmessage = function(e){
               `)
             } else if (data.user === loggedin_user) {
                  if (window.location.pathname.includes(data.slug)) {
-                    var active = 'active'
-                } else {
-                    var active = ''
-                }
+                var active = 'active'
+            } else {
+                var active = ''
+            }
                contacts.prepend(`
                    <li class="${active}" id="${data.slug}_contact">
                        <a href="${siteDomain}room/${data.slug}"

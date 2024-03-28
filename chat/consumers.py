@@ -137,21 +137,24 @@ class RoomConsumer(AsyncConsumer):
 
             msg_id = await self.create_message(text)
 
+            if self.contact != self.author:
+                await self.channel_layer.group_send(
+                    self.room_name,
+                    {
+                        'type': 'chat_message',
+                        'message': json.dumps(
+                            {'text': text, 'id': msg_id, 'time': str(datetime.today().strftime("%H:%M %p")),
+                             'receiver': self.contact})
+                    }
+                )
+
             await self.channel_layer.group_send(
                 user_room_name,
                 {
                     'type': 'chat_message',
                     'message': json.dumps(
-                        {'text': text, 'id': msg_id, 'time': str(datetime.today().strftime("%H:%M %p")), 'receiver': self.contact})
-                }
-            )
-
-            await self.channel_layer.group_send(
-                self.room_name,
-                {
-                    'type': 'chat_message',
-                    'message': json.dumps(
-                        {'text': text, 'id': msg_id, 'time': str(datetime.today().strftime("%H:%M %p")), 'receiver': self.contact})
+                        {'text': text, 'id': msg_id, 'time': str(datetime.today().strftime("%H:%M %p")),
+                         'receiver': self.contact})
                 }
             )
 
@@ -184,7 +187,8 @@ class RoomConsumer(AsyncConsumer):
         try:
             notification = Notification.objects.get(user__username=self.contact, slug=self.user.username, category='r')
             notification.last_text = text
-            notification.not_seen_count += 1
+            if self.contact != self.user.username:
+                notification.not_seen_count += 1
             notification.save()
         except Notification.DoesNotExist:
             user = User.objects.get(username=self.contact)
@@ -199,6 +203,9 @@ class RoomConsumer(AsyncConsumer):
             Notification.objects.Create(title=self.user.username, user=self.user, slug=self.contact, category='r')
 
         message = Message.objects.create(slug=self.contact, author_id=self.user.id, text=text)
+        if self.contact == self.user.username:
+            message.is_seen = True
+            message.save()
         return message.id
 
 
@@ -299,6 +306,7 @@ class SeenMessageConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data=None, bytes_data=None):
         if text_data:
+            print('+' * 100)
             text_data_json = json.loads(text_data)
             msg_id = text_data_json['msg_id']
             slug = text_data_json['slug']
@@ -310,6 +318,8 @@ class SeenMessageConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def change_message_to_seen(self, msg_id, slug, category, user, position):
         message = Message.objects.get(id=int(msg_id))
+        print('*' * 100)
+        print(user, message.author)
         if not message.is_seen:
             this_user = User.objects.get(username=user)
             message.is_seen = True

@@ -30,6 +30,8 @@ class RegisterView(generic.CreateView):
     def form_valid(self, form):
         if form.is_valid():
             cd = form.cleaned_data
+            print('*'*100)
+            print(settings.EMAIL_HOST_USER)
             send_otp_code(cd['username'], cd['email'])
             self.request.session['user_registration'] = {
                 'username': cd['username'],

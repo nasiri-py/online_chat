@@ -32,9 +32,9 @@
 body, html {
     height: 100%;
     margin: 0;
-    background: #7F7FD5;
-    background: -webkit-linear-gradient(to right, #91EAE4, #86A8E7, #7F7FD5);
-    background: linear-gradient(to right, #91EAE4, #86A8E7, #7F7FD5);
+    background: #17273d;
+    /*background: -webkit-linear-gradient(to right, #91EAE4, #86A8E7, #7F7FD5);*/
+    /*background: linear-gradient(to right, #91EAE4, #86A8E7, #7F7FD5);*/
 }
 
 a, a:hover {
@@ -83,7 +83,7 @@ a, a:hover {
 }
 
 .search {
-    border-radius: 15px 0 0 15px !important;
+    border-radius: 15px !important;
     background-color: rgba(0, 0, 0, 0.3) !important;
     border: 0 !important;
     color: #f5f6fa !important;
@@ -144,18 +144,24 @@ a, a:hover {
     cursor: pointer;
 }
 
-.contacts {
+.contacts, #results-box {
     list-style: none;
     padding: 0;
+    color: #f5f6fa;
 }
 
-.contacts li {
+.contacts li, #results-box li {
     width: 100% !important;
     padding: 10px;
     height: 78px;
+    border: none !important;
 }
 
-.contacts li:hover {
+#results-box a {
+    color: #f5f6fa;
+}
+
+.contacts li:hover, #results-box li:hover {
     background-color: rgba(0, 0, 0, 0.1);
 }
 
@@ -231,7 +237,7 @@ a, a:hover {
     margin-bottom: auto;
     margin-left: 10px;
     border-radius: 0 10px 10px 10px;
-    background-color: #2D4356;
+    background-color: #3d5872;
     color: #f5f6fa;
     padding: 10px;
     position: relative;
@@ -249,7 +255,7 @@ a, a:hover {
     top: 0;
     bottom: auto;
     border: 10px solid;
-    border-color: #2D4356 transparent transparent transparent;
+    border-color: #3d5872 transparent transparent transparent;
     border-radius: 3px 0;
 }
 
@@ -258,7 +264,7 @@ a, a:hover {
     margin-bottom: auto;
     margin-right: 10px;
     border-radius: 10px 0 10px 10px;
-    background-color: #4477CE;
+    background-color: #029791;
     color: #f5f6fa;
     padding: 10px;
     position: relative;
@@ -276,7 +282,7 @@ a, a:hover {
     top: 0;
     bottom: auto;
     border: 10px solid;
-    border-color: #4477CE transparent transparent transparent;
+    border-color: #029791 transparent transparent transparent;
     border-radius: 0 3px;
 }
 
@@ -391,8 +397,8 @@ a, a:hover {
 }
 
 .not_seen_count_badge {
-    min-width: 1.6em;
-    height: 1.6em;
+    min-width: 1.7em;
+    height: 1.7em;
     border-radius: 0.8em;
     display: flex;
     justify-content: center;
@@ -404,6 +410,7 @@ a, a:hover {
     position: absolute;
     top: 0;
     right: 0;
+    font-weight: 500;
 }
 
 #messages-list {
@@ -499,6 +506,26 @@ a, a:hover {
 #videocall_status span {
     backdrop-filter: blur(10px);
     color: #f5f6fa;
+}
+
+.online {
+    color: #4477CE;
+}
+
+.main-menu {
+    transform: translate3d(-18px, -10px, 0px) !important;
+     background: rgb(0,0,10);
+    height: 502px;
+    min-width: 166px;
+}
+
+.message-box {
+    top: 32px;
+    right: 25%;
+    z-index: 1200;
+}
+.message-box p {
+    background-color: #000;
 }
 
 @media (max-width: 576px) {
